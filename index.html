@@ -95,6 +95,118 @@ canvas#stage {
   color: #cfd6e0; font-size: 11px; text-align: left; line-height: 1.5;
 }
 .controls-block b { color: #ffd84a; }
+
+/* ---------- Title menu (HTML overlay over canvas) ---------- */
+#menu {
+  position: fixed; left: 0; right: 0;
+  bottom: 6%;
+  display: none;
+  flex-direction: column; align-items: center;
+  gap: 10px;
+  padding: 0 16px env(safe-area-inset-bottom);
+  z-index: 3;
+}
+#menu.show { display: flex; }
+.menu-btn {
+  width: min(360px, 92vw);
+  padding: 14px 18px;
+  border: none; border-radius: 14px;
+  cursor: pointer;
+  font-weight: 900; font-size: 18px; letter-spacing: 1.5px;
+  color: #1a0e00; text-align: center;
+  background: linear-gradient(180deg, #ffe066 0%, #ffb13a 100%);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 0 0 2px #c8902e;
+  transition: transform 0.05s ease, filter 0.15s;
+  font-family: "Impact", "Arial Black", system-ui, sans-serif;
+}
+.menu-btn:hover { filter: brightness(1.06); }
+.menu-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 0 0 2px #c8902e; }
+.menu-btn.facil   { background: linear-gradient(180deg, #6ee07a 0%, #2bb054 100%); box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 0 0 2px #1d7e3c; color: #082a12; }
+.menu-btn.medio   { background: linear-gradient(180deg, #ffe066 0%, #ffb13a 100%); box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 0 0 2px #c8902e; color: #1a0e00; }
+.menu-btn.dificil { background: linear-gradient(180deg, #ff6b6b 0%, #c8102e 100%); box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 0 0 2px #7a0a18; color: #2a0509; }
+.menu-btn.online {
+  background: linear-gradient(180deg, #3a4763 0%, #1c2540 100%);
+  color: #93a1b3; cursor: not-allowed; opacity: 0.9;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.5), 0 0 0 2px #2a3658;
+}
+.menu-btn.online .em-breve {
+  display: block; font-size: 11px; letter-spacing: 1px;
+  margin-top: 2px; color: #ffd84a; font-family: system-ui, sans-serif; font-weight: 700;
+}
+#menu-title {
+  display: none;
+  font-family: "Impact", "Arial Black", system-ui, sans-serif;
+  color: #fff; letter-spacing: 2px; font-size: 13px;
+  margin-bottom: 4px; text-shadow: 0 2px 0 #000;
+  text-align: center;
+}
+#menu.show #menu-title { display: block; }
+
+/* ---------- Touch controls ---------- */
+#touch {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  display: none;
+  pointer-events: none;
+  padding: 10px 14px env(safe-area-inset-bottom);
+  z-index: 4;
+}
+#touch.show { display: flex; justify-content: space-between; align-items: flex-end; }
+.dpad { position: relative; width: 168px; height: 168px; pointer-events: auto; flex-shrink: 0; }
+.actions { display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; pointer-events: auto; flex-shrink: 0; }
+.tbtn {
+  background: rgba(0,0,0,0.45); color: #fff;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 14px;
+  font-size: 16px; font-weight: 900; letter-spacing: 1px;
+  width: 60px; height: 60px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  user-select: none; -webkit-touch-callout: none;
+  font-family: "Impact","Arial Black", system-ui, sans-serif;
+  text-align: center; line-height: 1;
+  padding: 0;
+}
+.tbtn .lbl { display: block; font-size: 8px; opacity: 0.75; margin-top: 1px; letter-spacing: 0.3px; font-weight: 700; }
+/* Narrow landscape phones — shrink controls so all 3 fit */
+@media (max-height: 480px), (max-width: 920px) {
+  .dpad { width: 140px; height: 140px; }
+  .actions { grid-template-columns: repeat(3, 50px); gap: 8px; }
+  .tbtn { width: 50px; height: 50px; font-size: 14px; border-radius: 12px; }
+  .tbtn .lbl { font-size: 7px; }
+  .dp-up    { top: 0;    left: 46px; }
+  .dp-left  { top: 46px; left: 0;    }
+  .dp-right { top: 46px; left: 92px; }
+  .dp-down  { top: 92px; left: 46px; }
+}
+.tbtn:active, .tbtn.is-down {
+  background: rgba(255, 215, 100, 0.55); color: #1a0e00;
+  border-color: rgba(255, 215, 100, 0.95);
+}
+.dpad .tbtn { position: absolute; }
+.dp-up    { top: 0;    left: 56px; }
+.dp-left  { top: 56px; left: 0;    }
+.dp-right { top: 56px; left: 112px;}
+.dp-down  { top: 112px;left: 56px; }
+.ab-punch   { background: rgba(255, 80, 60, 0.40); }
+.ab-kick    { background: rgba(80, 160, 255, 0.40); }
+.ab-special { background: rgba(255, 200, 60, 0.45); color: #1a0e00; }
+
+/* Always show touch controls on touch devices and small landscape screens */
+@media (hover: none) and (pointer: coarse) {
+  #touch.always-on { display: flex; justify-content: space-between; align-items: flex-end; }
+}
+
+/* ---------- Rotate device hint ---------- */
+#rotate {
+  position: fixed; inset: 0; z-index: 6;
+  background: #0a0a0a; color: #fff;
+  display: none; align-items: center; justify-content: center;
+  text-align: center; padding: 24px;
+  font-weight: 700; font-size: 18px;
+}
+#rotate .icon { font-size: 56px; margin-bottom: 12px; }
+@media (orientation: portrait) and (max-width: 768px) {
+  #rotate { display: flex; flex-direction: column; }
+}
 </style>
 </head>
 <body>
@@ -115,9 +227,9 @@ canvas#stage {
       acima é fictícia. Não envie dinheiro.
     </div>
     <div class="controls-block">
-      <b>Jogador 1 — Zé:</b> WASD movimentar · F soco · G chute · H especial<br>
-      <b>Jogador 2 — Capitão:</b> ←↑→↓ movimentar · K soco · L chute · ; especial<br>
-      Defender: segure ↓ (ou S) parado, virado para o oponente.
+      <b>Movimento:</b> ← → mover · ↑ pular · ↓ defender<br>
+      <b>Ataques:</b> A soco · S chute · D especial<br>
+      No celular: D-pad e botões na tela.
     </div>
   </div>
 </div>
@@ -125,7 +237,40 @@ canvas#stage {
 <div id="stage-wrap">
   <canvas id="stage" width="960" height="540"></canvas>
 </div>
-<div id="hint">P1 (Zé): <b>WASD F G H</b> &nbsp;·&nbsp; P2 (Capitão): <b>← ↑ → ↓ K L ;</b> &nbsp;·&nbsp; Paródia • Apenas entretenimento</div>
+
+<div id="menu" aria-hidden="true">
+  <div id="menu-title">ESCOLHA A DIFICULDADE</div>
+  <button class="menu-btn facil"   data-difficulty="facil">FÁCIL</button>
+  <button class="menu-btn medio"   data-difficulty="medio">MÉDIO</button>
+  <button class="menu-btn dificil" data-difficulty="dificil">DIFÍCIL</button>
+  <button class="menu-btn online" disabled aria-disabled="true">
+    2 JOGADORES ONLINE
+    <span class="em-breve">EM BREVE…</span>
+  </button>
+</div>
+
+<div id="touch" aria-hidden="true">
+  <div class="dpad">
+    <button class="tbtn dp-up"    data-key="up"    aria-label="Pular">▲</button>
+    <button class="tbtn dp-left"  data-key="left"  aria-label="Esquerda">◀</button>
+    <button class="tbtn dp-right" data-key="right" aria-label="Direita">▶</button>
+    <button class="tbtn dp-down"  data-key="down"  aria-label="Defender">▼</button>
+  </div>
+  <div class="actions">
+    <button class="tbtn ab-punch"   data-key="punch"   aria-label="Soco">A<span class="lbl">SOCO</span></button>
+    <button class="tbtn ab-kick"    data-key="kick"    aria-label="Chute">S<span class="lbl">CHUTE</span></button>
+    <button class="tbtn ab-special" data-key="special" aria-label="Especial">D<span class="lbl">ESPECIAL</span></button>
+  </div>
+</div>
+
+<div id="rotate" aria-hidden="true">
+  <div class="icon">📱↻</div>
+  Vire o celular para o modo paisagem<br>para jogar.
+</div>
+
+<div id="hint">
+  Setas: mover · ↑ pular · ↓ defender · <b>A</b> soco · <b>S</b> chute · <b>D</b> especial &nbsp;·&nbsp; Paródia • Apenas entretenimento
+</div>
 
 <script>
 "use strict";
@@ -152,20 +297,27 @@ canvas#stage {
     name: "ZÉ DA ESQUERDA",
     short: "ZÉ",
     side: "p1",
-    skin: "#d8a973",
+    skin: "#d8a979",
     skinDark: "#a87b4f",
-    beard: "#3a2418",
-    cap: "#c8102e",
-    capBrim: "#7a0a18",
-    shirt: "#f0eadf",
-    suspender: "#1c1c1c",
-    pants: "#1f3a6b",
-    pantsDark: "#15264a",
+    skinShade: "#bf8f5f",
+    hair: "#bcbcbc",        // grey ring around bald top
+    hairDark: "#9a9a9a",
+    beard: "#e8e8e8",        // white/grey beard
+    beardDark: "#bcbcbc",
+    shirt: "#c8102e",        // PT red
+    shirtDark: "#8a0a1a",    // shading red
+    shirtLight: "#e8294a",   // highlight red
+    starWhite: "#ffffff",
+    pants: "#1c1c1c",
+    pantsDark: "#0e0e0e",
     boots: "#3d2914",
-    glove: "#d8a973",
+    bootsDark: "#241608",
+    belt: "#241608",
+    buckle: "#ffdf00",
+    glove: "#d8a979",        // bare fist (skin)
     accent: "#ffdf00",
-    speed: 220,
-    jumpV: -640,
+    speed: 215,
+    jumpV: -630,
     moveLabels: { punch: "SOCO SINDICAL", kick: "CHUTE PETISTA", special: "ABRAÇO POPULAR" },
     auraColor: "rgba(255, 60, 60, 0.55)",
     auraColor2: "rgba(255, 220, 80, 0.55)",
@@ -176,20 +328,30 @@ canvas#stage {
     name: "CAPITÃO DIREITA",
     short: "CAP",
     side: "p2",
-    skin: "#d8a973",
+    skin: "#d8a979",
     skinDark: "#a87b4f",
-    beard: null,
-    hair: "#2a1d12",
-    cap: "#5c1a1a",            // beret maroon
-    capBrim: "#3a0e0e",
-    shirt: "#3d5a3d",          // base camo
-    camoA: "#2a402a",
-    camoB: "#5a7547",
-    pants: "#4a5d2e",
-    pantsDark: "#2f3a1c",
-    boots: "#1a1a1a",
-    glove: "#1a1a1a",
+    skinShade: "#bf8f5f",
+    hair: "#3a2a1a",         // slick-back dark
+    hairGrey: "#7a6a5a",     // grey at temples
+    cap: "#1f2a14",          // dark olive beret
+    capBand: "#0e1408",      // beret band
+    capStar: "#ffdf00",      // beret star
+    capRedAccent: "#a01818", // small red trim
+    shirt: "#4a5d2e",        // base camo (olive)
+    camoA: "#2a3818",        // dark blotches
+    camoB: "#7a8a4a",        // light blotches
+    camoC: "#9a8050",        // tan blotches
+    pants: "#3a4720",        // olive pants
+    pantsDark: "#22290e",
+    boots: "#0a0a0a",        // black combat boots
+    bootsDark: "#000000",
+    belt: "#1a1208",
+    buckle: "#7a7a7a",
+    glove: "#1a1208",        // dark gloves
     accent: "#ffdf00",
+    medal1: "#ffe066",       // gold
+    medal2: "#5a7adc",       // ribbon
+    medal3: "#c8102e",       // red ribbon
     speed: 215,
     jumpV: -650,
     moveLabels: { punch: "CORONHADA", kick: "CHUTE PATRIOTA", special: "ORDEM E PROGRESSO" },
@@ -224,11 +386,131 @@ canvas#stage {
   let shake = 0;
   let hitstop = 0;
   const crowd = [];
-  let titleSelect = "ready";           // for title screen "press start"
   let titlePulse = 0;
   let timeNow = 0;                     // animation seconds since boot
+  let currentDifficulty = "medio";     // facil | medio | dificil
 
   const inputState = { p1: blankInputs(), p2: blankInputs() };
+
+  // ============================================================
+  // CPU AI — difficulty profiles
+  // ============================================================
+  const DIFFICULTIES = {
+    facil: {
+      label: "FÁCIL",
+      reactionMin: 22, reactionMax: 38,    // frames between decisions
+      approachThresh: 150,                  // px center-to-center to start attacking
+      atkChance: 0.40,                      // chance to attack when in range
+      kickChance: 0.20,                     // weighting once attacking
+      specialChance: 0.05,
+      blockChance: 0.10,                    // when foe is close + attacking
+      wrongDirChance: 0.18,                 // walk wrong way
+      jumpChance: 0.005,                    // per frame when far-mid range
+      whiffPunish: false,
+    },
+    medio: {
+      label: "MÉDIO",
+      reactionMin: 12, reactionMax: 24,
+      approachThresh: 120,
+      atkChance: 0.65,
+      kickChance: 0.35,
+      specialChance: 0.18,
+      blockChance: 0.32,
+      wrongDirChance: 0.05,
+      jumpChance: 0.010,
+      whiffPunish: true,
+    },
+    dificil: {
+      label: "DIFÍCIL",
+      reactionMin: 6,  reactionMax: 14,
+      approachThresh: 105,
+      atkChance: 0.80,
+      kickChance: 0.45,
+      specialChance: 0.30,
+      blockChance: 0.55,
+      wrongDirChance: 0.0,
+      jumpChance: 0.018,
+      whiffPunish: true,
+    },
+  };
+
+  let aiCooldown = 0;
+  let aiHeld = blankInputs(); // sticky decision so movement is held for several frames
+
+  function aiInputs(self, foe, difficulty) {
+    const d = DIFFICULTIES[difficulty] || DIFFICULTIES.medio;
+    if (self.stance === "ko" || isLockedStance(self.stance)) {
+      aiHeld = blankInputs();
+      return blankInputs();
+    }
+    if (aiCooldown > 0) {
+      aiCooldown--;
+      // keep walking decision alive between thinks
+      const cont = blankInputs();
+      cont.left = aiHeld.left; cont.right = aiHeld.right;
+      cont.down = aiHeld.down;
+      return cont;
+    }
+
+    const inp = blankInputs();
+    const dx = foe.x - self.x;
+    const adx = Math.abs(dx);
+    const towardLeft = dx < 0;
+
+    // Block when foe is mid-attack and close
+    if (adx < 140 && isAttackingStance(foe.stance) && Math.random() < d.blockChance) {
+      inp.down = true;
+      aiHeld = inp;
+      aiCooldown = 6 + Math.random() * 6 | 0;
+      return inp;
+    }
+
+    // Whiff-punish: foe just finished attacking and is in recovery → close & swing
+    if (d.whiffPunish && adx < 180 && foe.stance === "idle" && self.cd.punch === 0 && Math.random() < 0.45) {
+      // approach + punch
+      if (towardLeft) inp.left = true; else inp.right = true;
+      inp.punch = true;
+      aiHeld = inp;
+      aiCooldown = d.reactionMin;
+      return inp;
+    }
+
+    // Approach if too far
+    if (adx > d.approachThresh) {
+      const wrong = Math.random() < d.wrongDirChance;
+      if (wrong) {
+        if (towardLeft) inp.right = true; else inp.left = true;
+      } else {
+        if (towardLeft) inp.left = true; else inp.right = true;
+      }
+      // occasional jump-in
+      if (Math.random() < d.jumpChance) inp.up = true;
+      aiHeld = inp;
+      aiCooldown = (d.reactionMin + Math.random() * (d.reactionMax - d.reactionMin)) | 0;
+      return inp;
+    }
+
+    // In range — pick attack
+    const r = Math.random();
+    let chose = false;
+    if (r < d.specialChance && self.cd.special === 0) {
+      inp.special = true; chose = true;
+    } else if (r < d.specialChance + d.kickChance && self.cd.kick === 0) {
+      inp.kick = true; chose = true;
+    } else if (r < d.atkChance && self.cd.punch === 0) {
+      inp.punch = true; chose = true;
+    } else {
+      // small back-step / spacing
+      if (Math.random() < 0.3) {
+        if (towardLeft) inp.right = true; else inp.left = true;
+      }
+    }
+    aiHeld = inp;
+    aiCooldown = chose
+      ? (d.reactionMin + 4 + Math.random() * (d.reactionMax - d.reactionMin)) | 0
+      : (d.reactionMin + Math.random() * (d.reactionMax - d.reactionMin)) | 0;
+    return inp;
+  }
 
   function blankInputs() {
     return { left:false, right:false, up:false, down:false, punch:false, kick:false, special:false,
@@ -253,7 +535,8 @@ canvas#stage {
     };
   }
 
-  function newMatch() {
+  function newMatch(difficulty) {
+    if (difficulty) currentDifficulty = difficulty;
     p1 = makeFighter(ZE, "p1");
     p2 = makeFighter(CAPITAO, "p2");
     round = 1;
@@ -263,6 +546,29 @@ canvas#stage {
     lastWinner = null;
     effects.length = 0;
     shake = 0; hitstop = 0;
+    aiCooldown = 0; aiHeld = blankInputs();
+    inputState.p1 = blankInputs();
+    inputState.p2 = blankInputs();
+  }
+
+  function startMatch(difficulty) {
+    newMatch(difficulty);
+    hideMenu();
+  }
+
+  function backToTitle() {
+    phase = "title";
+    phaseT = 0;
+    showMenu();
+  }
+
+  function showMenu() {
+    const m = document.getElementById("menu");
+    if (m) { m.classList.add("show"); m.setAttribute("aria-hidden", "false"); }
+  }
+  function hideMenu() {
+    const m = document.getElementById("menu");
+    if (m) { m.classList.remove("show"); m.setAttribute("aria-hidden", "true"); }
   }
 
   function resetForNextRound() {
@@ -275,15 +581,12 @@ canvas#stage {
   }
 
   // ============================================================
-  // INPUT
+  // INPUT — single player (Zé). Arrows + A/S/D.
+  // P2 (Capitão) is driven by the CPU.
   // ============================================================
   const KEYMAP_P1 = {
-    KeyA: "left", KeyD: "right", KeyW: "up", KeyS: "down",
-    KeyF: "punch", KeyG: "kick", KeyH: "special",
-  };
-  const KEYMAP_P2 = {
     ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down",
-    KeyK: "punch", KeyL: "kick", Semicolon: "special",
+    KeyA: "punch", KeyS: "kick", KeyD: "special",
   };
 
   // edge-detect prev-frame state
@@ -292,14 +595,12 @@ canvas#stage {
   document.addEventListener("keydown", (e) => {
     if (e.repeat) return;
     if (KEYMAP_P1[e.code]) { inputState.p1[KEYMAP_P1[e.code]] = true; e.preventDefault(); }
-    if (KEYMAP_P2[e.code]) { inputState.p2[KEYMAP_P2[e.code]] = true; e.preventDefault(); }
-    if (e.code === "Enter" && phase === "matchEnd" && phaseT > 60) { newMatch(); }
-    if (e.code === "Enter" && phase === "title") { newMatch(); }
+    if (e.code === "Enter" && phase === "matchEnd" && phaseT > 60) { backToTitle(); }
+    if (e.code === "Enter" && phase === "title") { startMatch("medio"); }
   }, { passive: false });
 
   document.addEventListener("keyup", (e) => {
     if (KEYMAP_P1[e.code]) { inputState.p1[KEYMAP_P1[e.code]] = false; e.preventDefault(); }
-    if (KEYMAP_P2[e.code]) { inputState.p2[KEYMAP_P2[e.code]] = false; e.preventDefault(); }
   }, { passive: false });
 
   function refreshEdges() {
@@ -566,7 +867,7 @@ canvas#stage {
 
     // ===== FIGHT =====
     applyInputs(p1, inputState.p1);
-    applyInputs(p2, inputState.p2);
+    applyInputs(p2, aiInputs(p2, p1, currentDifficulty));
     integrate(p1); integrate(p2);
     resolveBodyCollision();
     updateFacing();
@@ -917,252 +1218,454 @@ canvas#stage {
     return "recovery";
   }
 
-  // ---------- ZÉ DA ESQUERDA ----------
+  // ---------- ZÉ DA ESQUERDA (Lula parody) ----------
   function drawZe(f, t) {
     const s = f.spec;
     const off = poseOffsets(f, t);
     const yShift = off.bob + off.lean + off.crouchY;
     const ph = attackPhase(f);
-    const ko = f.stance === "ko";
+    if (f.stance === "ko") { drawZeKO(f); return; }
 
-    // KO pose: lying on back
-    if (ko) { drawZeKO(f); return; }
+    const headY = -FH + 24 + yShift;
+    const torsoTop = -FH + 42 + yShift;
+    const torsoH = 50 - off.crouchY;
+    const torsoBot = torsoTop + torsoH;
+    // Stocky body: wider torso
+    const torsoHalfW = 28;
 
-    const headY = -FH + 22 + yShift;
-    const bodyTop = -FH + 38 + yShift;
-    const bodyBot = -FH + 88 + yShift;
-
-    // ----- Legs -----
-    ctx.fillStyle = s.pants;
+    // ----- Legs (dark trousers, chunky shoes) -----
     if (f.stance === "walk") {
       const a = off.legShuffle * 14;
-      drawLeg(-12 - a * 0.4, bodyBot, 16, 32 - off.crouchY, s.pants, s.boots, a);
-      drawLeg(8 + a * 0.4, bodyBot, 16, 32 - off.crouchY, s.pants, s.boots, -a);
+      drawZeLeg(-13 - a * 0.4, torsoBot, 16, 30 - off.crouchY, s);
+      drawZeLeg(7  + a * 0.4, torsoBot, 16, 30 - off.crouchY, s);
     } else if (f.stance === "jump") {
-      drawLeg(-12, bodyBot - 4, 14, 22, s.pants, s.boots, 8);
-      drawLeg(8, bodyBot - 4, 14, 22, s.pants, s.boots, 12);
+      drawZeLeg(-12, torsoBot - 4, 14, 22, s);
+      drawZeLeg(8,   torsoBot - 4, 14, 22, s);
     } else {
-      drawLeg(-12, bodyBot, 16, 32 - off.crouchY, s.pants, s.boots, 0);
-      drawLeg(8, bodyBot, 16, 32 - off.crouchY, s.pants, s.boots, 0);
+      drawZeLeg(-13, torsoBot, 16, 30 - off.crouchY, s);
+      drawZeLeg(7,   torsoBot, 16, 30 - off.crouchY, s);
     }
 
-    // ----- Torso (white tank) -----
+    // ----- Torso (PT red shirt) -----
+    // shaded back layer
+    ctx.fillStyle = s.shirtDark;
+    rectChunky(-torsoHalfW, torsoTop, torsoHalfW * 2, torsoH);
+    // main red front
     ctx.fillStyle = s.shirt;
-    rectChunky(-22, bodyTop, 44, 52 - off.crouchY);
-    // Suspenders
-    ctx.fillStyle = s.suspender;
-    ctx.fillRect(-16, bodyTop, 4, 50 - off.crouchY);
-    ctx.fillRect(12, bodyTop, 4, 50 - off.crouchY);
+    ctx.fillRect(-torsoHalfW + 2, torsoTop + 1, torsoHalfW * 2 - 4, torsoH - 2);
+    // highlight gradient on right side (sun-side)
+    const tg = ctx.createLinearGradient(-torsoHalfW, 0, torsoHalfW, 0);
+    tg.addColorStop(0, "rgba(255,255,255,0.10)");
+    tg.addColorStop(0.5, "rgba(255,255,255,0)");
+    tg.addColorStop(1, "rgba(0,0,0,0.18)");
+    ctx.fillStyle = tg;
+    ctx.fillRect(-torsoHalfW + 2, torsoTop + 1, torsoHalfW * 2 - 4, torsoH - 2);
+
+    // Shirt collar V-notch
+    ctx.fillStyle = s.shirtDark;
+    ctx.beginPath();
+    ctx.moveTo(-7, torsoTop);
+    ctx.lineTo(0, torsoTop + 8);
+    ctx.lineTo(7, torsoTop);
+    ctx.closePath();
+    ctx.fill();
+    // Skin neck patch
+    ctx.fillStyle = s.skin;
+    ctx.fillRect(-6, torsoTop, 12, 4);
+
+    // PT WHITE STAR on chest
+    ctx.fillStyle = s.starWhite;
+    drawStar(0, torsoTop + 22, 9, 5);
+    // Faint dark outline so the star stays crisp against red
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.stroke();
+
     // Belt
-    ctx.fillStyle = "#1a1208";
-    ctx.fillRect(-22, bodyTop + 46 - off.crouchY, 44, 6);
-    ctx.fillStyle = "#ffd84a";
-    ctx.fillRect(-2, bodyTop + 47 - off.crouchY, 4, 4);
+    ctx.fillStyle = s.belt;
+    ctx.fillRect(-torsoHalfW, torsoBot - 6, torsoHalfW * 2, 6);
+    // Buckle (brass)
+    ctx.fillStyle = s.buckle;
+    ctx.fillRect(-4, torsoBot - 5, 8, 4);
+    ctx.strokeStyle = "rgba(0,0,0,0.55)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-4, torsoBot - 5, 8, 4);
 
     // ----- Aura (special active) -----
     if (ph === "active" && f.attackKind === "special") {
       ctx.save();
       ctx.globalAlpha = 0.45;
-      const r = 56 + Math.sin(t * 30) * 4;
+      const r = 58 + Math.sin(t * 30) * 4;
       const grad = ctx.createRadialGradient(0, headY + 20, 4, 0, headY + 20, r);
-      grad.addColorStop(0, "#ffe066"); grad.addColorStop(0.6, "#ff5050"); grad.addColorStop(1, "rgba(0,0,0,0)");
+      grad.addColorStop(0, "#ffe066"); grad.addColorStop(0.55, "#ff5050"); grad.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = grad;
       ctx.beginPath(); ctx.arc(0, headY + 20, r, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
 
     // ----- Arms -----
-    drawZeArms(f, ph, bodyTop, off, s);
+    drawZeArms(f, ph, torsoTop, off, s);
 
     // ----- Head -----
-    ctx.fillStyle = s.skin;
-    ctx.beginPath(); ctx.arc(0, headY, 18, 0, Math.PI * 2); ctx.fill();
-
-    // Beard
-    ctx.fillStyle = s.beard;
-    ctx.beginPath();
-    ctx.moveTo(-14, headY + 4);
-    ctx.quadraticCurveTo(0, headY + 22, 14, headY + 4);
-    ctx.lineTo(12, headY - 2);
-    ctx.quadraticCurveTo(0, headY + 14, -12, headY - 2);
-    ctx.closePath();
-    ctx.fill();
-
-    // Mouth (small)
-    ctx.fillStyle = "#5a1818";
-    ctx.fillRect(-3, headY + 8, 6, 2);
-
-    // Eyes
-    if (f.stance === "hurt") {
-      ctx.fillStyle = "#111";
-      ctx.fillRect(-9, headY - 3, 5, 2);
-      ctx.fillRect(4, headY - 3, 5, 2);
-    } else {
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(-10, headY - 4, 6, 5);
-      ctx.fillRect(4, headY - 4, 6, 5);
-      ctx.fillStyle = "#111";
-      const dir = (f.facing === 1) ? 0 : -1;
-      ctx.fillRect(-7 + dir, headY - 3, 2, 3);
-      ctx.fillRect(7 + dir, headY - 3, 2, 3);
-    }
-
-    // Eyebrows (angry / determined)
-    ctx.fillStyle = "#3a2418";
-    ctx.fillRect(-12, headY - 8, 8, 2);
-    ctx.fillRect(4, headY - 7, 8, 2);
-
-    // ----- Cap (red baseball cap) -----
-    ctx.fillStyle = s.cap;
-    ctx.beginPath();
-    ctx.arc(0, headY - 6, 18, Math.PI * 1.05, Math.PI * 1.95, false);
-    ctx.lineTo(18, headY - 6);
-    ctx.lineTo(-18, headY - 6);
-    ctx.closePath();
-    ctx.fill();
-    // brim forward
-    ctx.fillStyle = s.capBrim;
-    ctx.fillRect(0, headY - 6, 22, 4);
-    // little star on cap
-    ctx.fillStyle = s.accent;
-    drawStar(0, headY - 14, 3, 5);
+    drawZeHead(f, headY, s);
   }
 
-  function drawZeArms(f, ph, bodyTop, off, s) {
-    const armY = bodyTop + 4 - off.crouchY;
-    ctx.fillStyle = s.shirt;
-    // back arm (shoulder + bicep + forearm)
-    rectChunky(-26, armY, 8, 30);
+  function drawZeHead(f, headY, s) {
+    // Hair ring (sides + back, grey) — sticks out behind the skin oval
+    ctx.fillStyle = s.hair;
+    ctx.beginPath();
+    ctx.ellipse(0, headY + 4, 24, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Hair shade (back of head)
+    ctx.fillStyle = s.hairDark;
+    ctx.beginPath();
+    ctx.ellipse(-6, headY + 10, 22, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // front arm — varies by stance
-    if (ph === "active" && f.attackKind === "punch") {
-      // extended punch
-      ctx.fillStyle = s.shirt;
-      rectChunky(18, armY, 36, 12);
-      ctx.fillStyle = s.glove;
-      rectChunky(50, armY - 2, 14, 16);
-      // motion lines
-      drawMotionLines(28, armY + 6, 3);
-    } else if (ph === "active" && f.attackKind === "kick") {
-      // arms back for balance
-      ctx.fillStyle = s.shirt;
-      rectChunky(18, armY - 2, 8, 24);
-      // kick handled in legs override
-    } else if (ph === "active" && f.attackKind === "special") {
-      // ABRAÇO POPULAR: both arms wrap forward
-      ctx.fillStyle = s.shirt;
-      rectChunky(18, armY - 4, 30, 12);
-      rectChunky(18, armY + 18, 30, 12);
-      ctx.fillStyle = s.glove;
-      rectChunky(46, armY - 6, 14, 14);
-      rectChunky(46, armY + 16, 14, 14);
-      drawHeart(56, armY + 10, 6);
-    } else if (f.stance === "block") {
-      ctx.fillStyle = s.shirt;
-      rectChunky(8, armY - 4, 14, 32);
-      rectChunky(-22, armY - 4, 14, 32);
-    } else if (ph === "startup") {
-      // wind-up
-      ctx.fillStyle = s.shirt;
-      rectChunky(-30, armY, 12, 24);
+    // Skin face/head — drawn on top, leaving the hair ring visible at sides
+    ctx.fillStyle = s.skin;
+    ctx.beginPath();
+    ctx.ellipse(0, headY, 21, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Skin shade (chin/right side)
+    ctx.fillStyle = s.skinShade;
+    ctx.beginPath();
+    ctx.ellipse(7, headY + 10, 14, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ears (small, behind beard area)
+    ctx.fillStyle = s.skinDark;
+    ctx.beginPath(); ctx.ellipse(-22, headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(22,  headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Bushy grey eyebrows (angled determined)
+    ctx.fillStyle = s.hair;
+    ctx.beginPath();
+    ctx.moveTo(-14, headY - 7);
+    ctx.lineTo(-3, headY - 5);
+    ctx.lineTo(-3, headY - 2);
+    ctx.lineTo(-14, headY - 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(14, headY - 7);
+    ctx.lineTo(3, headY - 5);
+    ctx.lineTo(3, headY - 2);
+    ctx.lineTo(14, headY - 4);
+    ctx.closePath();
+    ctx.fill();
+
+    // Eyes — round whites + pupils looking forward (toward opponent in local +x)
+    if (f.stance === "hurt") {
+      ctx.fillStyle = "#111";
+      ctx.fillRect(-9, headY, 5, 2);
+      ctx.fillRect(4, headY, 5, 2);
     } else {
-      ctx.fillStyle = s.shirt;
-      rectChunky(18, armY, 8, 30);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(-7, headY, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(7,  headY, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#1a1208";
+      ctx.beginPath(); ctx.arc(-6, headY + 1, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(8,  headY + 1, 2, 0, Math.PI * 2); ctx.fill();
+      // Eye highlights
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(-5, headY, 1, 1);
+      ctx.fillRect(9, headY, 1, 1);
     }
 
-    // Override legs for kick: extend front leg
-    if (ph === "active" && f.attackKind === "kick") {
-      ctx.fillStyle = s.pants;
-      rectChunky(20, bodyTop + 38 - off.crouchY, 36, 12);
-      ctx.fillStyle = s.boots;
-      rectChunky(50, bodyTop + 36 - off.crouchY, 16, 16);
-      drawMotionLines(28, bodyTop + 44 - off.crouchY, 3);
+    // Nose
+    ctx.fillStyle = s.skinDark;
+    ctx.beginPath();
+    ctx.moveTo(-2, headY + 2);
+    ctx.quadraticCurveTo(0, headY + 8, 3, headY + 7);
+    ctx.lineTo(-3, headY + 7);
+    ctx.closePath();
+    ctx.fill();
+    // Nostril shade
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(-1, headY + 7, 2, 1);
+
+    // White mustache
+    ctx.fillStyle = s.beard;
+    ctx.beginPath();
+    ctx.moveTo(-9, headY + 9);
+    ctx.quadraticCurveTo(-4, headY + 12, 0, headY + 11);
+    ctx.quadraticCurveTo(4, headY + 12, 9, headY + 9);
+    ctx.lineTo(8, headY + 11);
+    ctx.quadraticCurveTo(0, headY + 14, -8, headY + 11);
+    ctx.closePath();
+    ctx.fill();
+
+    // Full beard (chunky, white/grey, covering jaw)
+    ctx.fillStyle = s.beard;
+    ctx.beginPath();
+    ctx.moveTo(-17, headY + 8);
+    ctx.quadraticCurveTo(-22, headY + 22, -10, headY + 28);
+    ctx.lineTo(10, headY + 28);
+    ctx.quadraticCurveTo(22, headY + 22, 17, headY + 8);
+    ctx.lineTo(15, headY + 11);
+    ctx.quadraticCurveTo(0, headY + 22, -15, headY + 11);
+    ctx.closePath();
+    ctx.fill();
+    // Beard texture flecks
+    ctx.fillStyle = s.beardDark;
+    for (let i = -6; i <= 6; i += 4) {
+      ctx.fillRect(i - 1, headY + 16 + ((i * 2) & 3), 2, 2);
     }
+    ctx.fillRect(-12, headY + 18, 2, 2);
+    ctx.fillRect(10, headY + 19, 2, 2);
+
+    // Mouth — small line peeking through beard
+    if (f.stance === "hurt") {
+      ctx.fillStyle = "#3a0a0a";
+      ctx.fillRect(-4, headY + 13, 8, 3);
+    } else {
+      ctx.fillStyle = "#3a1010";
+      ctx.fillRect(-3, headY + 13, 6, 1);
+    }
+  }
+
+  function drawZeArms(f, ph, torsoTop, off, s) {
+    const armY = torsoTop + 6 - off.crouchY;
+
+    // BACK arm — always visible behind torso
+    ctx.fillStyle = s.shirtDark;
+    rectChunky(-30, armY - 2, 10, 32);
+    ctx.fillStyle = s.shirt;
+    rectChunky(-29, armY - 1, 8, 30);
+    // back fist (skin)
+    ctx.fillStyle = s.skin;
+    ctx.fillRect(-30, armY + 28, 10, 8);
+
+    // FRONT arm — pose-dependent
+    if (ph === "active" && f.attackKind === "punch") {
+      // SOCO SINDICAL — extended right hook
+      ctx.fillStyle = s.shirtDark;
+      rectChunky(18, armY - 3, 36, 14);
+      ctx.fillStyle = s.shirt;
+      ctx.fillRect(19, armY - 2, 34, 12);
+      // Bare fist
+      ctx.fillStyle = s.skin;
+      rectChunky(50, armY - 4, 16, 18);
+      ctx.fillStyle = s.skinDark;
+      ctx.fillRect(50, armY + 12, 16, 2); // wrist shadow
+      // Knuckle dots
+      ctx.fillStyle = s.skinShade;
+      ctx.fillRect(58, armY - 1, 2, 2);
+      ctx.fillRect(58, armY + 4, 2, 2);
+      ctx.fillRect(58, armY + 9, 2, 2);
+      // motion lines
+      drawMotionLines(28, armY + 6, 4);
+    } else if (ph === "active" && f.attackKind === "kick") {
+      // Arms tucked back for balance
+      ctx.fillStyle = s.shirtDark;
+      rectChunky(18, armY - 2, 10, 26);
+      ctx.fillStyle = s.shirt;
+      ctx.fillRect(19, armY - 1, 8, 24);
+    } else if (ph === "active" && f.attackKind === "special") {
+      // ABRAÇO POPULAR — both arms wrap forward
+      ctx.fillStyle = s.shirtDark;
+      rectChunky(18, armY - 6, 32, 14);
+      rectChunky(18, armY + 18, 32, 14);
+      ctx.fillStyle = s.shirt;
+      ctx.fillRect(19, armY - 5, 30, 12);
+      ctx.fillRect(19, armY + 19, 30, 12);
+      // Both fists
+      ctx.fillStyle = s.skin;
+      rectChunky(46, armY - 8, 16, 16);
+      rectChunky(46, armY + 16, 16, 16);
+      // Heart between them — popular embrace
+      drawHeart(56, armY + 10, 7);
+    } else if (f.stance === "block") {
+      // Cross-guard
+      ctx.fillStyle = s.shirtDark;
+      rectChunky(6, armY - 6, 16, 36);
+      rectChunky(-22, armY - 6, 16, 36);
+      ctx.fillStyle = s.shirt;
+      ctx.fillRect(7, armY - 5, 14, 34);
+      ctx.fillRect(-21, armY - 5, 14, 34);
+      // Skin fists
+      ctx.fillStyle = s.skin;
+      ctx.fillRect(8, armY - 8, 12, 8);
+      ctx.fillRect(-20, armY - 8, 12, 8);
+    } else if (ph === "startup") {
+      // Chamber — front fist drawn back near torso
+      ctx.fillStyle = s.shirtDark;
+      rectChunky(-12, armY, 12, 26);
+      ctx.fillStyle = s.shirt;
+      ctx.fillRect(-11, armY + 1, 10, 24);
+      ctx.fillStyle = s.skin;
+      ctx.fillRect(-12, armY + 22, 12, 8);
+    } else {
+      // Idle / walk — arm hangs at side
+      ctx.fillStyle = s.shirtDark;
+      rectChunky(18, armY, 10, 30);
+      ctx.fillStyle = s.shirt;
+      ctx.fillRect(19, armY + 1, 8, 28);
+      ctx.fillStyle = s.skin;
+      ctx.fillRect(18, armY + 28, 10, 8);
+    }
+
+    // KICK leg override
+    if (ph === "active" && f.attackKind === "kick") {
+      const kickY = torsoTop + 38 - off.crouchY;
+      ctx.fillStyle = s.pantsDark;
+      rectChunky(18, kickY, 38, 14);
+      ctx.fillStyle = s.pants;
+      ctx.fillRect(19, kickY + 1, 36, 12);
+      ctx.fillStyle = s.bootsDark;
+      rectChunky(50, kickY - 4, 18, 22);
+      ctx.fillStyle = s.boots;
+      ctx.fillRect(51, kickY - 3, 16, 20);
+      drawMotionLines(28, kickY + 6, 3);
+    }
+  }
+
+  // Single Lula leg with chunky shoe
+  function drawZeLeg(x, y, w, h, s) {
+    ctx.fillStyle = s.pantsDark;
+    rectChunky(x - 1, y - 1, w + 2, h + 2);
+    ctx.fillStyle = s.pants;
+    ctx.fillRect(x, y, w, h);
+    // chunky shoe
+    ctx.fillStyle = s.bootsDark;
+    rectChunky(x - 3, y + h, w + 6, 8);
+    ctx.fillStyle = s.boots;
+    ctx.fillRect(x - 2, y + h, w + 4, 6);
   }
 
   function drawZeKO(f) {
-    // Lying on the ground
+    // Lying on the ground (rotated -90°)
     const s = f.spec;
-    const yBase = -10;
     ctx.save();
-    ctx.translate(-10, yBase);
+    ctx.translate(-10, -10);
     ctx.rotate(-Math.PI / 2);
-    // legs
+    // Legs
+    ctx.fillStyle = s.pantsDark;
+    ctx.fillRect(-22, -18, 18, 34);
+    ctx.fillRect(-22, 2, 18, 34);
     ctx.fillStyle = s.pants;
-    ctx.fillRect(-20, -16, 16, 32);
-    ctx.fillRect(-20, 4, 16, 32);
+    ctx.fillRect(-21, -17, 16, 32);
+    ctx.fillRect(-21, 3, 16, 32);
+    // Boots
+    ctx.fillStyle = s.bootsDark;
+    ctx.fillRect(-24, 30, 22, 8);
+    ctx.fillRect(-24, 50, 22, 8);
     ctx.fillStyle = s.boots;
-    ctx.fillRect(-22, 30, 18, 6);
-    ctx.fillRect(-22, 50, 18, 6);
-    // body
+    ctx.fillRect(-23, 30, 20, 6);
+    ctx.fillRect(-23, 50, 20, 6);
+    // Belt
+    ctx.fillStyle = s.belt;
+    ctx.fillRect(-22, -22, 44, 6);
+    // Torso (PT red shirt)
+    ctx.fillStyle = s.shirtDark;
+    ctx.fillRect(-23, -54, 46, 32);
     ctx.fillStyle = s.shirt;
-    ctx.fillRect(-22, -52, 44, 36);
-    // head
+    ctx.fillRect(-22, -53, 44, 30);
+    // White star on chest (now showing on the side from this angle)
+    ctx.fillStyle = s.starWhite;
+    drawStar(0, -38, 7, 5);
+    // Head + face
+    ctx.fillStyle = s.hair;
+    ctx.beginPath(); ctx.ellipse(0, -68, 22, 20, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = s.skin;
-    ctx.beginPath(); ctx.arc(0, -68, 18, 0, Math.PI * 2); ctx.fill();
-    // beard
+    ctx.beginPath(); ctx.ellipse(0, -68, 19, 18, 0, 0, Math.PI * 2); ctx.fill();
+    // White beard
     ctx.fillStyle = s.beard;
-    ctx.beginPath(); ctx.arc(0, -62, 12, 0, Math.PI); ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(0, -60, 14, 9, 0, 0, Math.PI);
+    ctx.fill();
     // X eyes
-    ctx.strokeStyle = "#111"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(-9, -73); ctx.lineTo(-3, -67); ctx.moveTo(-9, -67); ctx.lineTo(-3, -73);
-    ctx.moveTo(3, -73); ctx.lineTo(9, -67); ctx.moveTo(3, -67); ctx.lineTo(9, -73); ctx.stroke();
-    // cap fallen off
-    ctx.fillStyle = s.cap;
-    ctx.beginPath(); ctx.arc(20, -76, 12, Math.PI, 0); ctx.lineTo(32, -76); ctx.lineTo(8, -76); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-9, -73); ctx.lineTo(-3, -67);
+    ctx.moveTo(-9, -67); ctx.lineTo(-3, -73);
+    ctx.moveTo(3, -73);  ctx.lineTo(9, -67);
+    ctx.moveTo(3, -67);  ctx.lineTo(9, -73);
+    ctx.stroke();
     ctx.restore();
   }
 
-  // ---------- CAPITÃO DIREITA ----------
+  // ---------- CAPITÃO DIREITA (Bolsonaro parody) ----------
   function drawCapitao(f, t) {
     const s = f.spec;
     const off = poseOffsets(f, t);
     const ph = attackPhase(f);
-    const ko = f.stance === "ko";
-
-    if (ko) { drawCapitaoKO(f); return; }
+    if (f.stance === "ko") { drawCapitaoKO(f); return; }
 
     const yShift = off.bob + off.lean + off.crouchY;
     const headY = -FH + 22 + yShift;
-    const bodyTop = -FH + 38 + yShift;
-    const bodyBot = -FH + 88 + yShift;
+    const torsoTop = -FH + 40 + yShift;
+    const torsoH = 50 - off.crouchY;
+    const torsoBot = torsoTop + torsoH;
+    const torsoHalfW = 26;
 
-    // Legs
+    // Legs (olive trousers tucked into combat boots)
     if (f.stance === "walk") {
       const a = off.legShuffle * 14;
-      drawLeg(-12 - a * 0.4, bodyBot, 16, 32 - off.crouchY, s.pants, s.boots, a);
-      drawLeg(8 + a * 0.4, bodyBot, 16, 32 - off.crouchY, s.pants, s.boots, -a);
+      drawCapLeg(-13 - a * 0.4, torsoBot, 16, 30 - off.crouchY, s);
+      drawCapLeg(7  + a * 0.4, torsoBot, 16, 30 - off.crouchY, s);
     } else if (f.stance === "jump") {
-      drawLeg(-12, bodyBot - 4, 14, 22, s.pants, s.boots, 10);
-      drawLeg(8, bodyBot - 4, 14, 22, s.pants, s.boots, 14);
+      drawCapLeg(-12, torsoBot - 4, 14, 22, s);
+      drawCapLeg(8,   torsoBot - 4, 14, 22, s);
     } else {
-      drawLeg(-12, bodyBot, 16, 32 - off.crouchY, s.pants, s.boots, 0);
-      drawLeg(8, bodyBot, 16, 32 - off.crouchY, s.pants, s.boots, 0);
+      drawCapLeg(-13, torsoBot, 16, 30 - off.crouchY, s);
+      drawCapLeg(7,   torsoBot, 16, 30 - off.crouchY, s);
     }
 
-    // Torso (camo)
-    ctx.fillStyle = s.shirt;
-    rectChunky(-22, bodyTop, 44, 52 - off.crouchY);
-    // Camo blotches
+    // Torso — base olive/camo
     ctx.fillStyle = s.camoA;
-    ctx.fillRect(-18, bodyTop + 4, 10, 8);
-    ctx.fillRect(2, bodyTop + 14, 12, 8);
-    ctx.fillRect(-12, bodyTop + 28, 8, 6);
-    ctx.fillRect(8, bodyTop + 36, 10, 6);
-    ctx.fillStyle = s.camoB;
-    ctx.fillRect(-8, bodyTop + 8, 6, 6);
-    ctx.fillRect(10, bodyTop + 6, 8, 6);
-    ctx.fillRect(-16, bodyTop + 18, 6, 6);
-    // Belt
-    ctx.fillStyle = "#1a1208";
-    ctx.fillRect(-22, bodyTop + 46 - off.crouchY, 44, 6);
-    // Medal
-    ctx.fillStyle = s.accent;
-    ctx.fillRect(8, bodyTop + 8, 6, 6);
-    ctx.fillStyle = "#c8102e";
-    ctx.fillRect(8, bodyTop + 14, 6, 4);
+    rectChunky(-torsoHalfW, torsoTop, torsoHalfW * 2, torsoH);
+    ctx.fillStyle = s.shirt;
+    ctx.fillRect(-torsoHalfW + 1, torsoTop + 1, torsoHalfW * 2 - 2, torsoH - 2);
 
-    // Aura (special active)
+    // Camo blotches — multi-layer for proper texture
+    ctx.fillStyle = s.camoA;
+    ctx.beginPath(); ctx.ellipse(-15, torsoTop + 8, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(8,   torsoTop + 18, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-8,  torsoTop + 30, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(13,  torsoTop + 38, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = s.camoB;
+    ctx.beginPath(); ctx.ellipse(-3, torsoTop + 12, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(15, torsoTop + 8,  4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-18,torsoTop + 22, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(2,  torsoTop + 36, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = s.camoC;
+    ctx.fillRect(-12, torsoTop + 4, 4, 3);
+    ctx.fillRect(7,   torsoTop + 26, 4, 3);
+    ctx.fillRect(-20, torsoTop + 14, 3, 2);
+
+    // Collar (V neck)
+    ctx.fillStyle = s.camoA;
+    ctx.beginPath();
+    ctx.moveTo(-7, torsoTop);
+    ctx.lineTo(0,  torsoTop + 9);
+    ctx.lineTo(7,  torsoTop);
+    ctx.closePath(); ctx.fill();
+    // Neck
+    ctx.fillStyle = s.skin;
+    ctx.fillRect(-6, torsoTop, 12, 5);
+
+    // Medal ribbons (3 small, on left chest)
+    const medalY = torsoTop + 8;
+    drawCapMedal(-15, medalY,     s.medal1, s.medal2);
+    drawCapMedal(-15, medalY + 8, s.medal1, s.medal3);
+    drawCapMedal(-15, medalY + 16,s.medal1, s.shirt);
+    // small star pin on right side of chest
+    ctx.fillStyle = s.accent;
+    drawStar(13, torsoTop + 12, 3.5, 5);
+    ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 1; ctx.stroke();
+
+    // Belt
+    ctx.fillStyle = s.belt;
+    ctx.fillRect(-torsoHalfW, torsoBot - 6, torsoHalfW * 2, 6);
+    // Buckle (steel)
+    ctx.fillStyle = s.buckle;
+    ctx.fillRect(-5, torsoBot - 5, 10, 4);
+    ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 1;
+    ctx.strokeRect(-5, torsoBot - 5, 10, 4);
+
+    // Aura (special active) — green/yellow
     if (ph === "active" && f.attackKind === "special") {
       ctx.save();
       ctx.globalAlpha = 0.5;
@@ -1177,108 +1680,259 @@ canvas#stage {
     }
 
     // Arms
-    drawCapitaoArms(f, ph, bodyTop, off, s);
+    drawCapitaoArms(f, ph, torsoTop, off, s);
 
     // Head
-    ctx.fillStyle = s.skin;
-    ctx.beginPath(); ctx.arc(0, headY, 18, 0, Math.PI * 2); ctx.fill();
-
-    // Mouth
-    ctx.fillStyle = "#5a1818";
-    ctx.fillRect(-4, headY + 8, 8, 2);
-
-    // Eyes
-    if (f.stance === "hurt") {
-      ctx.fillStyle = "#111";
-      ctx.fillRect(-9, headY - 3, 5, 2);
-      ctx.fillRect(4, headY - 3, 5, 2);
-    } else {
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(-10, headY - 4, 6, 5);
-      ctx.fillRect(4, headY - 4, 6, 5);
-      ctx.fillStyle = "#111";
-      const dir = (f.facing === 1) ? 0 : -1;
-      ctx.fillRect(-7 + dir, headY - 3, 2, 3);
-      ctx.fillRect(7 + dir, headY - 3, 2, 3);
-    }
-
-    // Eyebrows angry
-    ctx.fillStyle = s.hair;
-    ctx.fillRect(-13, headY - 9, 9, 2);
-    ctx.fillRect(4, headY - 8, 9, 2);
-
-    // Beret (tilted)
-    ctx.fillStyle = s.cap;
-    ctx.beginPath();
-    ctx.ellipse(2, headY - 14, 22, 8, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = s.capBrim;
-    ctx.fillRect(-12, headY - 9, 16, 3);
-    // beret medallion
-    ctx.fillStyle = s.accent;
-    ctx.beginPath(); ctx.arc(8, headY - 16, 3, 0, Math.PI * 2); ctx.fill();
+    drawCapitaoHead(f, headY, s);
   }
 
-  function drawCapitaoArms(f, ph, bodyTop, off, s) {
-    const armY = bodyTop + 4 - off.crouchY;
-    ctx.fillStyle = s.shirt;
-    // back arm
-    rectChunky(-26, armY, 8, 30);
+  function drawCapitaoHead(f, headY, s) {
+    // Slick-back hair shape behind the head
+    ctx.fillStyle = s.hair;
+    ctx.beginPath();
+    ctx.ellipse(0, headY - 6, 22, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Grey at temples
+    ctx.fillStyle = s.hairGrey;
+    ctx.fillRect(-19, headY - 4, 4, 4);
+    ctx.fillRect(15,  headY - 4, 4, 4);
 
+    // Skin face — slightly leaner than Lula
+    ctx.fillStyle = s.skin;
+    ctx.beginPath();
+    ctx.ellipse(0, headY, 20, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Strong jaw shading
+    ctx.fillStyle = s.skinShade;
+    ctx.beginPath();
+    ctx.ellipse(2, headY + 12, 16, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ears
+    ctx.fillStyle = s.skinDark;
+    ctx.beginPath(); ctx.ellipse(-21, headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(21,  headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Stern eyebrows — heavy, angled DOWN inward (frown)
+    ctx.fillStyle = "#1a0e08";
+    ctx.beginPath();
+    ctx.moveTo(-15, headY - 9);
+    ctx.lineTo(-3,  headY - 4);
+    ctx.lineTo(-3,  headY - 1);
+    ctx.lineTo(-15, headY - 5);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(15,  headY - 9);
+    ctx.lineTo(3,   headY - 4);
+    ctx.lineTo(3,   headY - 1);
+    ctx.lineTo(15,  headY - 5);
+    ctx.closePath(); ctx.fill();
+
+    // Eyes — narrow / intense
+    if (f.stance === "hurt") {
+      ctx.fillStyle = "#111";
+      ctx.fillRect(-9, headY, 5, 2);
+      ctx.fillRect(4, headY, 5, 2);
+    } else {
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(-10, headY - 1, 7, 4);
+      ctx.fillRect(4,   headY - 1, 7, 4);
+      ctx.fillStyle = "#1a0e08";
+      ctx.fillRect(-7, headY - 1, 3, 4);
+      ctx.fillRect(7,  headY - 1, 3, 4);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(-5, headY - 1, 1, 1);
+      ctx.fillRect(9,  headY - 1, 1, 1);
+    }
+
+    // Long, narrow nose
+    ctx.fillStyle = s.skinDark;
+    ctx.beginPath();
+    ctx.moveTo(-2, headY + 2);
+    ctx.lineTo(2,  headY + 2);
+    ctx.lineTo(3,  headY + 9);
+    ctx.lineTo(-3, headY + 9);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillRect(-2, headY + 9, 1, 1);
+    ctx.fillRect(1,  headY + 9, 1, 1);
+
+    // Frown mouth
+    ctx.strokeStyle = "#3a1010";
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-6, headY + 14);
+    ctx.quadraticCurveTo(0, headY + 12, 6, headY + 14);
+    ctx.stroke();
+    ctx.lineCap = "butt";
+
+    // Chin cleft
+    ctx.fillStyle = s.skinDark;
+    ctx.fillRect(-1, headY + 17, 2, 2);
+
+    // Beret — dark olive military, tilted
+    // Brim band
+    ctx.fillStyle = s.capBand;
+    ctx.fillRect(-18, headY - 11, 28, 4);
+    // Beret crown (tilted ellipse)
+    ctx.fillStyle = s.cap;
+    ctx.beginPath();
+    ctx.ellipse(4, headY - 16, 24, 10, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Beret highlight
+    ctx.fillStyle = "rgba(255,255,255,0.07)";
+    ctx.beginPath();
+    ctx.ellipse(2, headY - 19, 18, 5, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Red trim accent
+    ctx.fillStyle = s.capRedAccent;
+    ctx.fillRect(-8, headY - 9, 12, 2);
+
+    // Beret yellow STAR insignia on left (the wearer's right)
+    ctx.fillStyle = s.capStar;
+    drawStar(10, headY - 18, 4, 5);
+    ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  function drawCapMedal(x, y, gold, ribbon) {
+    // tiny rectangular ribbon with circular medal pendant
+    ctx.fillStyle = ribbon;
+    ctx.fillRect(x, y, 8, 4);
+    ctx.fillStyle = gold;
+    ctx.beginPath(); ctx.arc(x + 4, y + 6, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 0.8;
+    ctx.stroke();
+  }
+
+  function drawCapLeg(x, y, w, h, s) {
+    ctx.fillStyle = s.pantsDark;
+    rectChunky(x - 1, y - 1, w + 2, h + 2);
+    ctx.fillStyle = s.pants;
+    ctx.fillRect(x, y, w, h);
+    // tactical knee detail
+    ctx.fillStyle = s.pantsDark;
+    ctx.fillRect(x + 2, y + h - 14, w - 4, 2);
+    // Combat boots — tall
+    ctx.fillStyle = s.bootsDark;
+    rectChunky(x - 3, y + h - 4, w + 6, 12);
+    ctx.fillStyle = s.boots;
+    ctx.fillRect(x - 2, y + h - 3, w + 4, 10);
+    // Boot lace stripe
+    ctx.fillStyle = "rgba(255,255,255,0.10)";
+    ctx.fillRect(x + w / 2 - 1, y + h - 2, 2, 8);
+  }
+
+  function drawCapitaoArms(f, ph, torsoTop, off, s) {
+    const armY = torsoTop + 6 - off.crouchY;
+
+    // BACK arm
+    ctx.fillStyle = s.camoA;
+    rectChunky(-30, armY - 2, 10, 32);
+    ctx.fillStyle = s.shirt;
+    ctx.fillRect(-29, armY - 1, 8, 30);
+    ctx.fillStyle = s.glove;
+    ctx.fillRect(-30, armY + 28, 10, 8);
+
+    // FRONT arm — pose-dependent
     if (ph === "active" && f.attackKind === "punch") {
-      // CORONHADA: rifle butt strike (gloved fist forward, blocky)
+      // CORONHADA — straight forward punch with dark glove
+      ctx.fillStyle = s.camoA;
+      rectChunky(18, armY - 3, 36, 14);
       ctx.fillStyle = s.shirt;
-      rectChunky(18, armY, 36, 12);
+      ctx.fillRect(19, armY - 2, 34, 12);
+      // Camo blotch on sleeve
+      ctx.fillStyle = s.camoB;
+      ctx.beginPath(); ctx.ellipse(34, armY + 3, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+      // Combat glove (tactical, dark)
+      ctx.fillStyle = "#0a0a0a";
+      rectChunky(50, armY - 5, 18, 20);
       ctx.fillStyle = s.glove;
-      rectChunky(50, armY - 4, 16, 18);
-      // chevron stripe on glove
+      ctx.fillRect(51, armY - 4, 16, 18);
+      // Yellow chevron stripe on glove
       ctx.fillStyle = s.accent;
-      ctx.fillRect(54, armY + 2, 8, 2);
+      ctx.fillRect(55, armY + 2, 8, 2);
       drawMotionLines(28, armY + 6, 4);
     } else if (ph === "active" && f.attackKind === "kick") {
+      ctx.fillStyle = s.camoA;
+      rectChunky(18, armY - 2, 10, 26);
       ctx.fillStyle = s.shirt;
-      rectChunky(18, armY - 2, 8, 24);
+      ctx.fillRect(19, armY - 1, 8, 24);
     } else if (ph === "active" && f.attackKind === "special") {
-      // ORDEM E PROGRESSO: salute + outstretched palm of force
+      // ORDEM E PROGRESSO — salute back arm + outstretched force arm
+      ctx.fillStyle = s.camoA;
+      rectChunky(18, armY - 4, 32, 14);
+      rectChunky(-30, armY - 18, 10, 26);
       ctx.fillStyle = s.shirt;
-      rectChunky(18, armY - 4, 30, 12);
-      rectChunky(-26, armY - 14, 8, 22);   // saluting back arm raised
+      ctx.fillRect(19, armY - 3, 30, 12);
+      ctx.fillRect(-29, armY - 17, 8, 24);
       ctx.fillStyle = s.glove;
       rectChunky(46, armY - 6, 16, 16);
-      // banner ribbon "ORDEM"
+      // Saluting hand at brow (skin)
+      ctx.fillStyle = s.skin;
+      ctx.fillRect(-30, armY - 20, 12, 6);
+      // Banner ribbon "ORDEM"
       ctx.fillStyle = "#fff";
-      ctx.fillRect(48, armY - 22, 26, 10);
+      ctx.fillRect(48, armY - 24, 30, 12);
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(48, armY - 24, 30, 12);
       ctx.save();
       ctx.scale(f.facing, 1); // un-flip so the text reads left-to-right
       ctx.fillStyle = "#002776";
-      ctx.font = "bold 8px system-ui";
-      ctx.textAlign = "left";
-      ctx.fillText("ORDEM", 50 * f.facing, armY - 14);
+      ctx.font = "900 10px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("ORDEM", 63 * f.facing, armY - 16);
       ctx.restore();
     } else if (f.stance === "block") {
+      // Cross-guard
+      ctx.fillStyle = s.camoA;
+      rectChunky(6, armY - 6, 16, 36);
+      rectChunky(-22, armY - 6, 16, 36);
       ctx.fillStyle = s.shirt;
-      rectChunky(8, armY - 4, 14, 32);
-      rectChunky(-22, armY - 4, 14, 32);
+      ctx.fillRect(7, armY - 5, 14, 34);
+      ctx.fillRect(-21, armY - 5, 14, 34);
+      ctx.fillStyle = s.glove;
+      ctx.fillRect(8, armY - 8, 12, 8);
+      ctx.fillRect(-20, armY - 8, 12, 8);
     } else if (ph === "startup") {
+      // Chamber: front fist drawn back across torso
+      ctx.fillStyle = s.camoA;
+      rectChunky(-12, armY, 12, 26);
       ctx.fillStyle = s.shirt;
-      rectChunky(-30, armY, 12, 24);
+      ctx.fillRect(-11, armY + 1, 10, 24);
+      ctx.fillStyle = s.glove;
+      ctx.fillRect(-12, armY + 22, 12, 8);
     } else {
+      // Idle / walk — front arm at side
+      ctx.fillStyle = s.camoA;
+      rectChunky(18, armY, 10, 30);
       ctx.fillStyle = s.shirt;
-      rectChunky(18, armY, 8, 30);
+      ctx.fillRect(19, armY + 1, 8, 28);
+      ctx.fillStyle = s.glove;
+      ctx.fillRect(18, armY + 28, 10, 8);
     }
 
+    // KICK leg override — CHUTE PATRIOTA, with mini Brazilian flag fluttering off boot
     if (ph === "active" && f.attackKind === "kick") {
-      // CHUTE PATRIOTA: forward kick, extended boot
+      const kickY = torsoTop + 38 - off.crouchY;
+      ctx.fillStyle = s.pantsDark;
+      rectChunky(18, kickY, 38, 14);
       ctx.fillStyle = s.pants;
-      rectChunky(20, bodyTop + 38 - off.crouchY, 36, 12);
+      ctx.fillRect(19, kickY + 1, 36, 12);
+      // Boot
+      ctx.fillStyle = s.bootsDark;
+      rectChunky(50, kickY - 4, 20, 22);
       ctx.fillStyle = s.boots;
-      rectChunky(50, bodyTop + 36 - off.crouchY, 18, 18);
-      // tiny flag flutter on boot
-      ctx.fillStyle = "#ffdf00";
-      ctx.fillRect(70, bodyTop + 30 - off.crouchY, 6, 4);
+      ctx.fillRect(51, kickY - 3, 18, 20);
+      // Tiny flag fluttering off boot
       ctx.fillStyle = "#009c3b";
-      ctx.fillRect(70, bodyTop + 26 - off.crouchY, 6, 4);
-      drawMotionLines(28, bodyTop + 44 - off.crouchY, 4);
+      ctx.fillRect(72, kickY - 4, 8, 5);
+      ctx.fillStyle = "#ffdf00";
+      ctx.fillRect(72, kickY + 1, 8, 5);
+      ctx.fillStyle = "#002776";
+      ctx.fillRect(74, kickY + 2, 4, 3);
+      drawMotionLines(28, kickY + 6, 4);
     }
   }
 
@@ -1287,24 +1941,52 @@ canvas#stage {
     ctx.save();
     ctx.translate(-10, -10);
     ctx.rotate(-Math.PI / 2);
+    // Legs
+    ctx.fillStyle = s.pantsDark;
+    ctx.fillRect(-22, -18, 18, 34);
+    ctx.fillRect(-22, 2, 18, 34);
     ctx.fillStyle = s.pants;
-    ctx.fillRect(-20, -16, 16, 32);
-    ctx.fillRect(-20, 4, 16, 32);
+    ctx.fillRect(-21, -17, 16, 32);
+    ctx.fillRect(-21, 3, 16, 32);
+    // Combat boots
+    ctx.fillStyle = s.bootsDark;
+    ctx.fillRect(-24, 26, 22, 12);
+    ctx.fillRect(-24, 46, 22, 12);
     ctx.fillStyle = s.boots;
-    ctx.fillRect(-22, 30, 18, 6);
-    ctx.fillRect(-22, 50, 18, 6);
+    ctx.fillRect(-23, 27, 20, 10);
+    ctx.fillRect(-23, 47, 20, 10);
+    // Belt
+    ctx.fillStyle = s.belt;
+    ctx.fillRect(-22, -22, 44, 6);
+    // Torso — camo
+    ctx.fillStyle = s.camoA;
+    ctx.fillRect(-23, -54, 46, 32);
     ctx.fillStyle = s.shirt;
-    ctx.fillRect(-22, -52, 44, 36);
+    ctx.fillRect(-22, -53, 44, 30);
+    ctx.fillStyle = s.camoB;
+    ctx.beginPath(); ctx.ellipse(-12, -42, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(8, -38, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    // Yellow star pin on chest
+    ctx.fillStyle = s.accent;
+    drawStar(0, -38, 3.5, 5);
+    // Head
+    ctx.fillStyle = s.hair;
+    ctx.beginPath(); ctx.ellipse(0, -68, 22, 18, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = s.skin;
-    ctx.beginPath(); ctx.arc(0, -68, 18, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#111"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(0, -68, 19, 18, 0, 0, Math.PI * 2); ctx.fill();
+    // X eyes
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(-9, -73); ctx.lineTo(-3, -67); ctx.moveTo(-9, -67); ctx.lineTo(-3, -73);
-    ctx.moveTo(3, -73); ctx.lineTo(9, -67); ctx.moveTo(3, -67); ctx.lineTo(9, -73);
+    ctx.moveTo(-9, -73); ctx.lineTo(-3, -67);
+    ctx.moveTo(-9, -67); ctx.lineTo(-3, -73);
+    ctx.moveTo(3, -73);  ctx.lineTo(9, -67);
+    ctx.moveTo(3, -67);  ctx.lineTo(9, -73);
     ctx.stroke();
-    // beret on the floor
+    // Beret on the floor next to him
     ctx.fillStyle = s.cap;
-    ctx.beginPath(); ctx.ellipse(20, -76, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(22, -76, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = s.capStar;
+    drawStar(22, -76, 2.5, 5);
     ctx.restore();
   }
 
@@ -1595,7 +2277,7 @@ canvas#stage {
       ctx.fillText(winnerName, W / 2, H / 2 + 10);
       ctx.fillStyle = "#cfd6e0";
       ctx.font = "16px system-ui";
-      ctx.fillText("Pressione ENTER para revanche", W / 2, H / 2 + 50);
+      ctx.fillText("Toque ou pressione ENTER para voltar", W / 2, H / 2 + 50);
     }
   }
 
@@ -1653,15 +2335,8 @@ canvas#stage {
     ctx.fillText("VS", 0, 0);
     ctx.restore();
 
-    // Press start (pulse)
-    const a = 0.5 + Math.sin(titlePulse * 6) * 0.4;
-    ctx.save();
-    ctx.globalAlpha = a;
-    ctx.fillStyle = "#fff";
-    ctx.font = "900 20px system-ui";
-    ctx.textAlign = "center";
-    ctx.fillText("PRESSIONE  ENTER  PARA COMEÇAR", W / 2, H - 36);
-    ctx.restore();
+    // The HTML menu renders the difficulty selector on top of this canvas,
+    // so we leave the title screen visually clean here.
   }
 
   function drawTitlePortrait(cx, cy, key, facing) {
@@ -1761,20 +2436,57 @@ canvas#stage {
       try { return localStorage.getItem(PAID_KEY) === "yes"; } catch { return false; }
     })();
     if (paid) hidePaywall();
+    // Show menu once paywall is dismissed; if paid already, show now.
+    if (paid) showMenu();
 
     document.getElementById("btn-paid").addEventListener("click", () => {
       try { localStorage.setItem(PAID_KEY, "yes"); } catch {}
       hidePaywall();
+      showMenu();
     });
 
-    // Resize-aware HiDPI canvas (kept at virtual 960x540)
-    const setCanvasSize = () => {
-      // Maintain attribute at 960x540; CSS handles fit.
-      canvas.width = W;
-      canvas.height = H;
-    };
+    // Wire menu buttons → start a match at chosen difficulty
+    document.querySelectorAll("#menu .menu-btn").forEach((btn) => {
+      const diff = btn.dataset.difficulty;
+      if (!diff) return; // online button is disabled
+      btn.addEventListener("click", () => startMatch(diff));
+    });
+
+    // Wire touch controls (works for mouse too — useful for desktop testing)
+    const touch = document.getElementById("touch");
+    const isTouch = ("ontouchstart" in window) || (navigator.maxTouchPoints || 0) > 0;
+    if (isTouch) {
+      touch.classList.add("always-on");
+      touch.setAttribute("aria-hidden", "false");
+    }
+    document.querySelectorAll("#touch .tbtn").forEach((btn) => {
+      const key = btn.dataset.key;
+      if (!key) return;
+      const set = (v) => (e) => {
+        e.preventDefault();
+        inputState.p1[key] = v;
+        btn.classList.toggle("is-down", v);
+      };
+      btn.addEventListener("touchstart", set(true),  { passive: false });
+      btn.addEventListener("touchend",   set(false), { passive: false });
+      btn.addEventListener("touchcancel",set(false), { passive: false });
+      btn.addEventListener("mousedown",  set(true));
+      btn.addEventListener("mouseup",    set(false));
+      btn.addEventListener("mouseleave", set(false));
+      // prevent contextmenu / double-tap zoom
+      btn.addEventListener("contextmenu", (e) => e.preventDefault());
+    });
+
+    // Tap canvas at match end → back to title (mobile-friendly)
+    canvas.addEventListener("pointerdown", () => {
+      if (phase === "matchEnd" && phaseT > 60) backToTitle();
+    });
+
+    // Resize-aware canvas (kept at virtual 960x540 — CSS handles fit)
+    const setCanvasSize = () => { canvas.width = W; canvas.height = H; };
     setCanvasSize();
     window.addEventListener("resize", setCanvasSize);
+    window.addEventListener("orientationchange", setCanvasSize);
 
     requestAnimationFrame(frame);
   }
