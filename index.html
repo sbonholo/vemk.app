@@ -406,6 +406,29 @@ canvas#stage {
     }
   }
 
+  // Push fighters apart so they can't occupy the same space on the ground.
+  // Lets jumps pass over (preserves cross-up potential) and skips KO'd bodies.
+  function resolveBodyCollision() {
+    if (p1.stance === "ko" || p2.stance === "ko") return;
+    if (!p1.onGround || !p2.onGround) return;
+    const dx = p2.x - p1.x;
+    const dist = Math.abs(dx);
+    if (dist >= FW) return;
+    const overlap = FW - dist;
+    const sign = dx >= 0 ? 1 : -1;
+    p1.x -= (overlap / 2) * sign;
+    p2.x += (overlap / 2) * sign;
+    // If a wall absorbed one fighter's push, give the rest of the push to the other.
+    const minX = WALL_L + FW / 2;
+    const maxX = WALL_R - FW / 2;
+    if (p1.x < minX) { p2.x += (minX - p1.x) * sign; p1.x = minX; }
+    else if (p1.x > maxX) { p2.x -= (p1.x - maxX) * sign; p1.x = maxX; }
+    if (p2.x < minX) { p1.x -= (minX - p2.x) * sign; p2.x = minX; }
+    else if (p2.x > maxX) { p1.x += (p2.x - maxX) * sign; p2.x = maxX; }
+    p1.x = Math.max(minX, Math.min(maxX, p1.x));
+    p2.x = Math.max(minX, Math.min(maxX, p2.x));
+  }
+
   function attackHitbox(f) {
     if (!isAttackingStance(f.stance) || !f.attackKind) return null;
     const m = MOVES[f.attackKind];
@@ -545,6 +568,7 @@ canvas#stage {
     applyInputs(p1, inputState.p1);
     applyInputs(p2, inputState.p2);
     integrate(p1); integrate(p2);
+    resolveBodyCollision();
     updateFacing();
     resolveHits();
     updateEffects();
@@ -662,8 +686,16 @@ canvas#stage {
     if (phase === "title") {
       drawTitle();
     } else {
-      drawFighter(p2);  // back-to-front by side - draws p2 first if behind, but we'll just draw both
-      drawFighter(p1);
+      // Active attacker draws on top so the punching arm / kicking leg overlaps
+      // the opponent's body. Otherwise back-to-front by x.
+      let order;
+      const a1 = isAttackingStance(p1.stance);
+      const a2 = isAttackingStance(p2.stance);
+      if (a1 && !a2) order = [p2, p1];
+      else if (a2 && !a1) order = [p1, p2];
+      else order = p1.x <= p2.x ? [p1, p2] : [p2, p1];
+      drawFighter(order[0]);
+      drawFighter(order[1]);
       drawAuras();
       drawEffects();
       drawHud();
@@ -711,12 +743,6 @@ canvas#stage {
 
   function drawDistantSkyline() {
     ctx.fillStyle = "rgba(15, 20, 40, 0.55)";
-    let x = 0;
-    while (x < W) {
-      const w = 30 + Math.random() * 0; // deterministic? we want stable per-frame; use indexed values
-      break;
-    }
-    // deterministic skyline so it doesn't flicker
     const heights = [42, 60, 36, 78, 54, 30, 88, 50, 64, 40, 70, 46, 58, 36, 72, 48, 90, 44];
     let cur = 0;
     for (let i = 0; i < heights.length; i++) {
@@ -1222,12 +1248,13 @@ canvas#stage {
       // banner ribbon "ORDEM"
       ctx.fillStyle = "#fff";
       ctx.fillRect(48, armY - 22, 26, 10);
+      ctx.save();
+      ctx.scale(f.facing, 1); // un-flip so the text reads left-to-right
       ctx.fillStyle = "#002776";
       ctx.font = "bold 8px system-ui";
       ctx.textAlign = "left";
-      ctx.scale(f.facing, 1);
       ctx.fillText("ORDEM", 50 * f.facing, armY - 14);
-      ctx.scale(f.facing, 1);
+      ctx.restore();
     } else if (f.stance === "block") {
       ctx.fillStyle = s.shirt;
       rectChunky(8, armY - 4, 14, 32);
@@ -1428,15 +1455,30 @@ canvas#stage {
 
   // ---------- HUD: Brazilian-flag styled ----------
   function drawHud() {
+    // Dark backdrop strip so names + bars stay readable over bright sky / sun.
+    ctx.fillStyle = "rgba(0, 0, 0, 0.32)";
+    ctx.fillRect(0, 0, W, 100);
+    const fade = ctx.createLinearGradient(0, 100, 0, 130);
+    fade.addColorStop(0, "rgba(0, 0, 0, 0.32)");
+    fade.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, 100, W, 30);
+
     drawHpBar(p1, 30, 30, false);
     drawHpBar(p2, W - 30 - 360, 30, true);
 
-    // Names
-    ctx.fillStyle = "#fff";
+    // Names with black stroke for readability against any background.
     ctx.font = "900 18px system-ui";
+    ctx.lineJoin = "round";
+    ctx.miterLimit = 2;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#000";
+    ctx.fillStyle = "#fff";
     ctx.textAlign = "left";
+    ctx.strokeText(p1.spec.name, 30, 80);
     ctx.fillText(p1.spec.name, 30, 80);
     ctx.textAlign = "right";
+    ctx.strokeText(p2.spec.name, W - 30, 80);
     ctx.fillText(p2.spec.name, W - 30, 80);
 
     // Round dots
