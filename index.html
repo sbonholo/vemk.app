@@ -195,6 +195,150 @@ canvas#stage {
   #touch.always-on { display: flex; justify-content: space-between; align-items: flex-end; }
 }
 
+/* ---------- Character select overlay ---------- */
+#select {
+  position: fixed; inset: 0; z-index: 3;
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(10, 14, 26, 0.55);
+  padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  backdrop-filter: blur(2px);
+}
+#select.show { display: flex; }
+#select-title {
+  font-family: "Impact","Arial Black", system-ui, sans-serif;
+  font-size: clamp(22px, 3.4vw, 36px);
+  letter-spacing: 3px; color: #ffd84a;
+  text-shadow: 0 3px 0 #000, 0 0 12px rgba(0,0,0,0.6);
+  margin: 0 0 16px;
+}
+#select-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(10px, 2vw, 24px);
+  width: 100%; max-width: 760px;
+}
+.select-card {
+  flex: 1 1 0;
+  display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.4));
+  border: 3px solid #2a3658; border-radius: 18px;
+  padding: 14px 10px;
+  cursor: pointer;
+  font-family: "Impact","Arial Black", system-ui, sans-serif;
+  color: #fff; letter-spacing: 1.5px;
+  transition: transform 0.07s ease, border-color 0.15s, box-shadow 0.15s;
+  min-width: 0;
+}
+.select-card.ze  { border-color: #c8102e; background: linear-gradient(180deg, rgba(200, 16, 46, 0.25), rgba(20, 8, 12, 0.6)); }
+.select-card.cap { border-color: #5a7547; background: linear-gradient(180deg, rgba(74, 93, 46, 0.30), rgba(15, 22, 8, 0.6)); }
+.select-card:hover { transform: translateY(-2px); }
+.select-card:active { transform: translateY(1px) scale(0.98); }
+.select-portrait {
+  width: clamp(80px, 14vw, 120px);
+  height: clamp(110px, 18vw, 160px);
+  image-rendering: pixelated;
+  display: block;
+}
+.select-name { font-size: clamp(13px, 1.6vw, 18px); margin-top: 6px; }
+.select-tag  { font-size: 10px; color: #cfd6e0; opacity: 0.85; }
+.select-go   {
+  margin-top: 8px; padding: 8px 14px;
+  background: #ffdf00; color: #1a0e00;
+  border-radius: 8px; font-size: 14px;
+}
+.select-card.ze .select-go  { background: #c8102e; color: #fff; }
+.select-card.cap .select-go { background: #4a5d2e; color: #ffdf00; }
+.select-vs {
+  font-family: "Impact", system-ui, sans-serif;
+  font-size: clamp(28px, 5vw, 56px);
+  color: #fff; -webkit-text-stroke: 2px #c8102e;
+  text-shadow: 0 4px 0 rgba(0,0,0,0.45);
+  flex: 0 0 auto;
+}
+#select-back {
+  margin-top: 18px;
+  background: transparent; color: #cfd6e0;
+  border: 2px solid rgba(255,255,255,0.4);
+  padding: 10px 18px; border-radius: 10px;
+  font-weight: 800; font-size: 14px;
+  cursor: pointer;
+}
+#select-back:hover { background: rgba(255,255,255,0.06); }
+.select-hint { color: #aab4c5; font-size: 11px; margin: 10px 0 0; text-align: center; }
+
+/* ---------- Pause button + modal ---------- */
+#pause-btn {
+  position: fixed; top: calc(env(safe-area-inset-top) + 8px); left: 12px; z-index: 4;
+  background: rgba(0,0,0,0.55); color: #fff;
+  border: 2px solid rgba(255, 215, 100, 0.55);
+  border-radius: 10px;
+  padding: 6px 12px; font-weight: 900; letter-spacing: 1px;
+  cursor: pointer; font-size: 13px;
+  font-family: "Impact","Arial Black", system-ui, sans-serif;
+}
+#pause-btn:hover { background: rgba(20,20,20,0.7); }
+#pause-btn:active { transform: scale(0.96); }
+
+#pause-modal {
+  position: fixed; inset: 0; z-index: 7;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(3px);
+  padding: 16px;
+}
+#pause-modal.show { display: flex; }
+.modal-card {
+  background: linear-gradient(180deg, #16203a 0%, #0a0f1a 100%);
+  border: 2px solid #2a3658; border-radius: 14px;
+  padding: 22px 20px; min-width: min(360px, 92vw);
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.modal-title {
+  font-family: "Impact","Arial Black", system-ui, sans-serif;
+  font-size: 24px; letter-spacing: 2px;
+  color: #ffd84a;
+  text-shadow: 0 2px 0 #000;
+  margin-bottom: 4px;
+}
+.modal-sub { color: #aab4c5; font-size: 12px; margin-bottom: 14px; }
+.modal-actions { display: flex; gap: 10px; justify-content: center; }
+.modal-btn {
+  flex: 1 1 0;
+  padding: 12px 18px; border: none; border-radius: 10px;
+  font-weight: 900; font-size: 16px; letter-spacing: 1.5px; cursor: pointer;
+  font-family: "Impact","Arial Black", system-ui, sans-serif;
+}
+.modal-btn.yes { background: linear-gradient(180deg, #ff6b6b, #c8102e); color: #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.4); }
+.modal-btn.no  { background: linear-gradient(180deg, #6ee07a, #2bb054); color: #082a12; box-shadow: 0 3px 0 rgba(0,0,0,0.4); }
+.modal-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+
+/* ---------- Match-end actions ---------- */
+#end-actions {
+  position: fixed; left: 0; right: 0;
+  bottom: calc(env(safe-area-inset-bottom) + 14px);
+  z-index: 4;
+  display: none;
+  flex-direction: column; align-items: center;
+  gap: 10px; padding: 0 16px;
+}
+#end-actions.show { display: flex; }
+.end-btn {
+  width: min(360px, 92vw);
+  padding: 14px 18px; border: none; border-radius: 12px;
+  font-weight: 900; font-size: 17px; letter-spacing: 1.5px;
+  cursor: pointer;
+  font-family: "Impact","Arial Black", system-ui, sans-serif;
+  background: linear-gradient(180deg, #3a4763, #1c2540);
+  color: #fff;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+}
+.end-btn.primary {
+  background: linear-gradient(180deg, #ffe066 0%, #ffb13a 100%);
+  color: #1a0e00; box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 0 0 2px #c8902e;
+}
+.end-btn:active { transform: translateY(2px); }
+
 /* ---------- Rotate device hint ---------- */
 #rotate {
   position: fixed; inset: 0; z-index: 6;
@@ -247,6 +391,45 @@ canvas#stage {
     2 JOGADORES ONLINE
     <span class="em-breve">EM BREVE…</span>
   </button>
+</div>
+
+<div id="select" aria-hidden="true">
+  <div id="select-title">ESCOLHA SEU LUTADOR</div>
+  <div id="select-row">
+    <button class="select-card ze" data-side="p1" aria-label="Jogar como Zé da Esquerda">
+      <canvas class="select-portrait" data-portrait="ze" width="120" height="160"></canvas>
+      <div class="select-name">ZÉ DA ESQUERDA</div>
+      <div class="select-tag">SINDICALISTA</div>
+      <div class="select-go">JOGAR</div>
+    </button>
+    <div class="select-vs">VS</div>
+    <button class="select-card cap" data-side="p2" aria-label="Jogar como Capitão Direita">
+      <canvas class="select-portrait" data-portrait="capitao" width="120" height="160"></canvas>
+      <div class="select-name">CAPITÃO DIREITA</div>
+      <div class="select-tag">MILITAR</div>
+      <div class="select-go">JOGAR</div>
+    </button>
+  </div>
+  <button id="select-back">← VOLTAR</button>
+  <p class="select-hint">O computador joga com o outro lutador.</p>
+</div>
+
+<button id="pause-btn" hidden aria-label="Pausar">⏸ PAUSAR</button>
+
+<div id="pause-modal" role="dialog" aria-modal="true" aria-labelledby="pause-modal-title">
+  <div class="modal-card">
+    <div id="pause-modal-title" class="modal-title">VOLTAR AO MENU?</div>
+    <div class="modal-sub">A luta atual será descartada.</div>
+    <div class="modal-actions">
+      <button class="modal-btn yes" data-action="back-to-menu">SIM</button>
+      <button class="modal-btn no"  data-action="resume">NÃO</button>
+    </div>
+  </div>
+</div>
+
+<div id="end-actions" aria-hidden="true">
+  <button class="end-btn primary" data-action="play-again">JOGAR NOVAMENTE</button>
+  <button class="end-btn"         data-action="back-to-menu">MENU PRINCIPAL</button>
 </div>
 
 <div id="touch" aria-hidden="true">
@@ -372,10 +555,13 @@ canvas#stage {
   // STATE
   // ============================================================
   const canvas = document.getElementById("stage");
-  const ctx = canvas.getContext("2d");
+  // `ctx` is a `let` so we can temporarily redirect drawing to other canvases
+  // (used by the character-select card portraits). drawZe/drawCapitao read
+  // this file-scoped variable directly.
+  let ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
 
-  let phase = "title";                 // title | ready | fight | roundEnd | matchEnd
+  let phase = "title";                 // title | select | ready | fight | roundEnd | matchEnd
   let phaseT = 0;
   let round = 1;
   let wins = { p1: 0, p2: 0 };
@@ -389,6 +575,8 @@ canvas#stage {
   let titlePulse = 0;
   let timeNow = 0;                     // animation seconds since boot
   let currentDifficulty = "medio";     // facil | medio | dificil
+  let playerSide = "p1";               // "p1" = playing Zé (left); "p2" = playing Capitão (right)
+  let paused = false;                  // pause modal open
 
   const inputState = { p1: blankInputs(), p2: blankInputs() };
 
@@ -437,19 +625,28 @@ canvas#stage {
   let aiCooldown = 0;
   let aiHeld = blankInputs(); // sticky decision so movement is held for several frames
 
+  // Synthesize the *Edge flags so the AI's attack inputs are seen as button
+  // presses by applyInputs() — it only triggers attacks on edge-detected input.
+  function finalizeAi(inp) {
+    inp.punchEdge   = !!inp.punch;
+    inp.kickEdge    = !!inp.kick;
+    inp.specialEdge = !!inp.special;
+    return inp;
+  }
+
   function aiInputs(self, foe, difficulty) {
     const d = DIFFICULTIES[difficulty] || DIFFICULTIES.medio;
     if (self.stance === "ko" || isLockedStance(self.stance)) {
       aiHeld = blankInputs();
-      return blankInputs();
+      return finalizeAi(blankInputs());
     }
     if (aiCooldown > 0) {
       aiCooldown--;
-      // keep walking decision alive between thinks
+      // Keep walking decision alive between thinks (no attacks during cooldown)
       const cont = blankInputs();
       cont.left = aiHeld.left; cont.right = aiHeld.right;
       cont.down = aiHeld.down;
-      return cont;
+      return finalizeAi(cont);
     }
 
     const inp = blankInputs();
@@ -458,21 +655,20 @@ canvas#stage {
     const towardLeft = dx < 0;
 
     // Block when foe is mid-attack and close
-    if (adx < 140 && isAttackingStance(foe.stance) && Math.random() < d.blockChance) {
+    if (adx < 150 && isAttackingStance(foe.stance) && Math.random() < d.blockChance) {
       inp.down = true;
       aiHeld = inp;
-      aiCooldown = 6 + Math.random() * 6 | 0;
-      return inp;
+      aiCooldown = 6 + (Math.random() * 6 | 0);
+      return finalizeAi(inp);
     }
 
-    // Whiff-punish: foe just finished attacking and is in recovery → close & swing
-    if (d.whiffPunish && adx < 180 && foe.stance === "idle" && self.cd.punch === 0 && Math.random() < 0.45) {
-      // approach + punch
+    // Whiff-punish: foe just finished attacking and is in recovery
+    if (d.whiffPunish && adx < 200 && foe.stance === "idle" && self.cd.punch === 0 && Math.random() < 0.55) {
       if (towardLeft) inp.left = true; else inp.right = true;
       inp.punch = true;
       aiHeld = inp;
       aiCooldown = d.reactionMin;
-      return inp;
+      return finalizeAi(inp);
     }
 
     // Approach if too far
@@ -487,10 +683,11 @@ canvas#stage {
       if (Math.random() < d.jumpChance) inp.up = true;
       aiHeld = inp;
       aiCooldown = (d.reactionMin + Math.random() * (d.reactionMax - d.reactionMin)) | 0;
-      return inp;
+      return finalizeAi(inp);
     }
 
-    // In range — pick attack
+    // In range — pick an attack. Roll once, then prefer the highest-priority
+    // available move under that roll (special > kick > punch).
     const r = Math.random();
     let chose = false;
     if (r < d.specialChance && self.cd.special === 0) {
@@ -498,6 +695,10 @@ canvas#stage {
     } else if (r < d.specialChance + d.kickChance && self.cd.kick === 0) {
       inp.kick = true; chose = true;
     } else if (r < d.atkChance && self.cd.punch === 0) {
+      inp.punch = true; chose = true;
+    } else if (self.cd.punch === 0 && Math.random() < 0.5) {
+      // Fallback: if no roll matched but punch is ready, swing anyway —
+      // prevents the CPU from staring at the player when in range.
       inp.punch = true; chose = true;
     } else {
       // small back-step / spacing
@@ -509,7 +710,7 @@ canvas#stage {
     aiCooldown = chose
       ? (d.reactionMin + 4 + Math.random() * (d.reactionMax - d.reactionMin)) | 0
       : (d.reactionMin + Math.random() * (d.reactionMax - d.reactionMin)) | 0;
-    return inp;
+    return finalizeAi(inp);
   }
 
   function blankInputs() {
@@ -535,8 +736,7 @@ canvas#stage {
     };
   }
 
-  function newMatch(difficulty) {
-    if (difficulty) currentDifficulty = difficulty;
+  function newMatch() {
     p1 = makeFighter(ZE, "p1");
     p2 = makeFighter(CAPITAO, "p2");
     round = 1;
@@ -549,27 +749,58 @@ canvas#stage {
     aiCooldown = 0; aiHeld = blankInputs();
     inputState.p1 = blankInputs();
     inputState.p2 = blankInputs();
+    paused = false;
+    hidePauseModal();
+    hideEndActions();
+    showPauseBtn();
   }
 
-  function startMatch(difficulty) {
-    newMatch(difficulty);
+  // Title menu → difficulty button click goes here
+  function startSelect(difficulty) {
+    if (difficulty) currentDifficulty = difficulty;
     hideMenu();
+    showSelect();
+    phase = "select";
+    phaseT = 0;
+  }
+
+  // Character select → card click goes here
+  function startMatch(side) {
+    playerSide = (side === "p2") ? "p2" : "p1";
+    hideSelect();
+    hidePauseBtn();   // showPauseBtn fires at the bottom of newMatch
+    newMatch();
   }
 
   function backToTitle() {
     phase = "title";
     phaseT = 0;
+    paused = false;
+    hidePauseModal();
+    hideEndActions();
+    hidePauseBtn();
+    hideSelect();
     showMenu();
   }
 
-  function showMenu() {
-    const m = document.getElementById("menu");
-    if (m) { m.classList.add("show"); m.setAttribute("aria-hidden", "false"); }
+  // Replay same matchup, same difficulty, same character pick
+  function replayMatch() {
+    hideEndActions();
+    newMatch();
   }
-  function hideMenu() {
-    const m = document.getElementById("menu");
-    if (m) { m.classList.remove("show"); m.setAttribute("aria-hidden", "true"); }
-  }
+
+  // ---------- DOM helpers ----------
+  function el(id) { return document.getElementById(id); }
+  function showMenu()         { const m = el("menu");        if (m){ m.classList.add("show");    m.setAttribute("aria-hidden", "false"); } }
+  function hideMenu()         { const m = el("menu");        if (m){ m.classList.remove("show"); m.setAttribute("aria-hidden", "true");  } }
+  function showSelect()       { const m = el("select");      if (m){ m.classList.add("show");    m.setAttribute("aria-hidden", "false"); } }
+  function hideSelect()       { const m = el("select");      if (m){ m.classList.remove("show"); m.setAttribute("aria-hidden", "true");  } }
+  function showPauseBtn()     { const m = el("pause-btn");   if (m){ m.hidden = false; } }
+  function hidePauseBtn()     { const m = el("pause-btn");   if (m){ m.hidden = true;  } }
+  function showPauseModal()   { const m = el("pause-modal"); if (m){ m.classList.add("show"); } }
+  function hidePauseModal()   { const m = el("pause-modal"); if (m){ m.classList.remove("show"); } }
+  function showEndActions()   { const m = el("end-actions"); if (m){ m.classList.add("show"); } }
+  function hideEndActions()   { const m = el("end-actions"); if (m){ m.classList.remove("show"); } }
 
   function resetForNextRound() {
     p1 = makeFighter(ZE, "p1");
@@ -595,8 +826,25 @@ canvas#stage {
   document.addEventListener("keydown", (e) => {
     if (e.repeat) return;
     if (KEYMAP_P1[e.code]) { inputState.p1[KEYMAP_P1[e.code]] = true; e.preventDefault(); }
-    if (e.code === "Enter" && phase === "matchEnd" && phaseT > 60) { backToTitle(); }
-    if (e.code === "Enter" && phase === "title") { startMatch("medio"); }
+    if (e.code === "Escape") {
+      if (phase === "fight" || phase === "ready" || phase === "roundEnd") {
+        if (paused) { paused = false; hidePauseModal(); }
+        else { paused = true; showPauseModal(); }
+        e.preventDefault();
+      } else if (phase === "select") {
+        hideSelect(); phase = "title"; phaseT = 0; showMenu();
+      }
+    }
+    if (e.code === "Enter") {
+      if (phase === "title") { startSelect("medio"); }
+      else if (phase === "select") { startMatch(playerSide); }
+      else if (phase === "matchEnd" && phaseT > 60) { replayMatch(); }
+    }
+    // Quick character pick from the keyboard during select
+    if (phase === "select") {
+      if (e.code === "ArrowLeft")  playerSide = "p1";
+      if (e.code === "ArrowRight") playerSide = "p2";
+    }
   }, { passive: false });
 
   document.addEventListener("keyup", (e) => {
@@ -823,6 +1071,7 @@ canvas#stage {
   }
 
   function step() {
+    if (paused) return;
     if (hitstop > 0) { hitstop--; updateEffects(); return; }
     refreshEdges();
 
@@ -851,6 +1100,7 @@ canvas#stage {
       if (phaseT >= ROUND_END_FRAMES) {
         if (wins.p1 >= WINS_TO_WIN || wins.p2 >= WINS_TO_WIN) {
           phase = "matchEnd"; phaseT = 0;
+          hidePauseBtn();
         } else {
           round++;
           resetForNextRound();
@@ -862,12 +1112,21 @@ canvas#stage {
     if (phase === "matchEnd") {
       phaseT++;
       updateEffects();
+      // Show the end buttons after the K.O. settles
+      if (phaseT === 60) showEndActions();
       return;
     }
 
     // ===== FIGHT =====
-    applyInputs(p1, inputState.p1);
-    applyInputs(p2, aiInputs(p2, p1, currentDifficulty));
+    // The human always uses inputState.p1 — we just route it to whichever
+    // fighter they picked, and let the AI drive the other.
+    if (playerSide === "p1") {
+      applyInputs(p1, inputState.p1);
+      applyInputs(p2, aiInputs(p2, p1, currentDifficulty));
+    } else {
+      applyInputs(p1, aiInputs(p1, p2, currentDifficulty));
+      applyInputs(p2, inputState.p1);
+    }
     integrate(p1); integrate(p2);
     resolveBodyCollision();
     updateFacing();
@@ -984,7 +1243,8 @@ canvas#stage {
     drawCrowd();
     drawGround();
 
-    if (phase === "title") {
+    if (phase === "title" || phase === "select") {
+      // Both phases show the marquee title art behind their HTML overlay
       drawTitle();
     } else {
       // Active attacker draws on top so the punching arm / kicking leg overlaps
@@ -1219,6 +1479,7 @@ canvas#stage {
   }
 
   // ---------- ZÉ DA ESQUERDA (Lula parody) ----------
+  // Short and stocky: lower head, wider torso, big belly bulge, very short legs.
   function drawZe(f, t) {
     const s = f.spec;
     const off = poseOffsets(f, t);
@@ -1226,72 +1487,75 @@ canvas#stage {
     const ph = attackPhase(f);
     if (f.stance === "ko") { drawZeKO(f); return; }
 
-    const headY = -FH + 24 + yShift;
-    const torsoTop = -FH + 42 + yShift;
-    const torsoH = 50 - off.crouchY;
-    const torsoBot = torsoTop + torsoH;
-    // Stocky body: wider torso
-    const torsoHalfW = 28;
+    // Stocky proportions
+    const headY = -FH + 32 + yShift;          // head sits lower than Capitão
+    const torsoTop = -FH + 50 + yShift;       // body starts lower
+    const torsoH = 46 - off.crouchY;
+    const torsoBot = torsoTop + torsoH;       // torsoBot ~= -14 (above feet 14)
+    const torsoHalfW = 30;                    // wider torso
 
-    // ----- Legs (dark trousers, chunky shoes) -----
+    // ----- Short chunky legs -----
     if (f.stance === "walk") {
-      const a = off.legShuffle * 14;
-      drawZeLeg(-13 - a * 0.4, torsoBot, 16, 30 - off.crouchY, s);
-      drawZeLeg(7  + a * 0.4, torsoBot, 16, 30 - off.crouchY, s);
+      const a = off.legShuffle * 10;
+      drawZeLeg(-14 - a * 0.3, torsoBot, 18, 22 - off.crouchY, s);
+      drawZeLeg(-4 + a * 0.3, torsoBot, 18, 22 - off.crouchY, s);
     } else if (f.stance === "jump") {
-      drawZeLeg(-12, torsoBot - 4, 14, 22, s);
-      drawZeLeg(8,   torsoBot - 4, 14, 22, s);
+      drawZeLeg(-14, torsoBot - 3, 16, 16, s);
+      drawZeLeg(-2,  torsoBot - 3, 16, 16, s);
     } else {
-      drawZeLeg(-13, torsoBot, 16, 30 - off.crouchY, s);
-      drawZeLeg(7,   torsoBot, 16, 30 - off.crouchY, s);
+      drawZeLeg(-14, torsoBot, 18, 22 - off.crouchY, s);
+      drawZeLeg(-4,  torsoBot, 18, 22 - off.crouchY, s);
     }
 
     // ----- Torso (PT red shirt) -----
-    // shaded back layer
     ctx.fillStyle = s.shirtDark;
     rectChunky(-torsoHalfW, torsoTop, torsoHalfW * 2, torsoH);
-    // main red front
     ctx.fillStyle = s.shirt;
     ctx.fillRect(-torsoHalfW + 2, torsoTop + 1, torsoHalfW * 2 - 4, torsoH - 2);
-    // highlight gradient on right side (sun-side)
-    const tg = ctx.createLinearGradient(-torsoHalfW, 0, torsoHalfW, 0);
-    tg.addColorStop(0, "rgba(255,255,255,0.10)");
-    tg.addColorStop(0.5, "rgba(255,255,255,0)");
-    tg.addColorStop(1, "rgba(0,0,0,0.18)");
-    ctx.fillStyle = tg;
-    ctx.fillRect(-torsoHalfW + 2, torsoTop + 1, torsoHalfW * 2 - 4, torsoH - 2);
+
+    // Belly bulge — big round shape pushing out at the bottom of the torso
+    ctx.fillStyle = s.shirtDark;
+    ctx.beginPath();
+    ctx.ellipse(0, torsoTop + torsoH - 10, torsoHalfW + 6, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = s.shirt;
+    ctx.beginPath();
+    ctx.ellipse(0, torsoTop + torsoH - 10, torsoHalfW + 4, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Belly highlight (left, sun-side after facing flip)
+    ctx.fillStyle = s.shirtLight;
+    ctx.beginPath();
+    ctx.ellipse(-8, torsoTop + torsoH - 14, 12, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     // Shirt collar V-notch
     ctx.fillStyle = s.shirtDark;
     ctx.beginPath();
-    ctx.moveTo(-7, torsoTop);
-    ctx.lineTo(0, torsoTop + 8);
-    ctx.lineTo(7, torsoTop);
+    ctx.moveTo(-8, torsoTop);
+    ctx.lineTo(0, torsoTop + 9);
+    ctx.lineTo(8, torsoTop);
     ctx.closePath();
     ctx.fill();
-    // Skin neck patch
     ctx.fillStyle = s.skin;
-    ctx.fillRect(-6, torsoTop, 12, 4);
+    ctx.fillRect(-7, torsoTop, 14, 5);
 
     // PT WHITE STAR on chest
     ctx.fillStyle = s.starWhite;
-    drawStar(0, torsoTop + 22, 9, 5);
-    // Faint dark outline so the star stays crisp against red
+    drawStar(0, torsoTop + 22, 11, 5);
     ctx.lineWidth = 1.5;
-    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
     ctx.stroke();
 
-    // Belt
+    // Belt across the bulge
     ctx.fillStyle = s.belt;
-    ctx.fillRect(-torsoHalfW, torsoBot - 6, torsoHalfW * 2, 6);
-    // Buckle (brass)
+    ctx.fillRect(-torsoHalfW - 2, torsoBot - 6, torsoHalfW * 2 + 4, 6);
     ctx.fillStyle = s.buckle;
-    ctx.fillRect(-4, torsoBot - 5, 8, 4);
-    ctx.strokeStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(-5, torsoBot - 5, 10, 4);
+    ctx.strokeStyle = "rgba(0,0,0,0.6)";
     ctx.lineWidth = 1;
-    ctx.strokeRect(-4, torsoBot - 5, 8, 4);
+    ctx.strokeRect(-5, torsoBot - 5, 10, 4);
 
-    // ----- Aura (special active) -----
+    // Aura (special active)
     if (ph === "active" && f.attackKind === "special") {
       ctx.save();
       ctx.globalAlpha = 0.45;
@@ -1303,125 +1567,145 @@ canvas#stage {
       ctx.restore();
     }
 
-    // ----- Arms -----
+    // Arms
     drawZeArms(f, ph, torsoTop, off, s);
-
-    // ----- Head -----
+    // Head (round, beardy, warm)
     drawZeHead(f, headY, s);
   }
 
   function drawZeHead(f, headY, s) {
-    // Hair ring (sides + back, grey) — sticks out behind the skin oval
+    // Hair ring (grey, sides + back) — visible behind the skin oval since
+    // the ring is wider than the face.
     ctx.fillStyle = s.hair;
     ctx.beginPath();
-    ctx.ellipse(0, headY + 4, 24, 22, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, headY + 4, 26, 22, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Hair shade (back of head)
     ctx.fillStyle = s.hairDark;
     ctx.beginPath();
-    ctx.ellipse(-6, headY + 10, 22, 16, 0, 0, Math.PI * 2);
+    ctx.ellipse(-6, headY + 10, 24, 16, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Skin face/head — drawn on top, leaving the hair ring visible at sides
+    // Round face — wider than tall (chubby cheeks)
     ctx.fillStyle = s.skin;
     ctx.beginPath();
-    ctx.ellipse(0, headY, 21, 22, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, headY, 23, 21, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Skin shade (chin/right side)
+    // Cheek warmth (ruddy circles)
+    ctx.fillStyle = "rgba(220, 90, 70, 0.22)";
+    ctx.beginPath(); ctx.arc(-13, headY + 4, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(13,  headY + 4, 5, 0, Math.PI * 2); ctx.fill();
+    // Right-side shading
     ctx.fillStyle = s.skinShade;
     ctx.beginPath();
-    ctx.ellipse(7, headY + 10, 14, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(8, headY + 8, 14, 11, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Ears (small, behind beard area)
+    // Ears
     ctx.fillStyle = s.skinDark;
-    ctx.beginPath(); ctx.ellipse(-22, headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(22,  headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-23, headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(23,  headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
 
-    // Bushy grey eyebrows (angled determined)
+    // Friendly bushy eyebrows — slightly upturned arc
     ctx.fillStyle = s.hair;
     ctx.beginPath();
-    ctx.moveTo(-14, headY - 7);
-    ctx.lineTo(-3, headY - 5);
+    ctx.moveTo(-15, headY - 6);
+    ctx.quadraticCurveTo(-9, headY - 9, -3, headY - 5);
     ctx.lineTo(-3, headY - 2);
-    ctx.lineTo(-14, headY - 4);
+    ctx.quadraticCurveTo(-9, headY - 5, -15, headY - 3);
     ctx.closePath();
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(14, headY - 7);
-    ctx.lineTo(3, headY - 5);
+    ctx.moveTo(15, headY - 6);
+    ctx.quadraticCurveTo(9, headY - 9, 3, headY - 5);
     ctx.lineTo(3, headY - 2);
-    ctx.lineTo(14, headY - 4);
+    ctx.quadraticCurveTo(9, headY - 5, 15, headY - 3);
     ctx.closePath();
     ctx.fill();
 
-    // Eyes — round whites + pupils looking forward (toward opponent in local +x)
+    // Small eyes (warm)
     if (f.stance === "hurt") {
       ctx.fillStyle = "#111";
       ctx.fillRect(-9, headY, 5, 2);
       ctx.fillRect(4, headY, 5, 2);
     } else {
       ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.arc(-7, headY, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(7,  headY, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-7, headY + 1, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(7,  headY + 1, 3, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#1a1208";
-      ctx.beginPath(); ctx.arc(-6, headY + 1, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(8,  headY + 1, 2, 0, Math.PI * 2); ctx.fill();
-      // Eye highlights
+      ctx.beginPath(); ctx.arc(-6, headY + 2, 1.6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(8,  headY + 2, 1.6, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#fff";
-      ctx.fillRect(-5, headY, 1, 1);
-      ctx.fillRect(9, headY, 1, 1);
+      ctx.fillRect(-6, headY, 1, 1);
+      ctx.fillRect(8, headY, 1, 1);
     }
 
-    // Nose
-    ctx.fillStyle = s.skinDark;
+    // Round bulb nose
+    ctx.fillStyle = s.skinShade;
     ctx.beginPath();
-    ctx.moveTo(-2, headY + 2);
-    ctx.quadraticCurveTo(0, headY + 8, 3, headY + 7);
-    ctx.lineTo(-3, headY + 7);
-    ctx.closePath();
+    ctx.ellipse(0, headY + 7, 4, 4, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Nostril shade
     ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(-1, headY + 7, 2, 1);
+    ctx.fillRect(-2, headY + 9, 2, 1);
+    ctx.fillRect(0, headY + 9, 2, 1);
 
-    // White mustache
-    ctx.fillStyle = s.beard;
-    ctx.beginPath();
-    ctx.moveTo(-9, headY + 9);
-    ctx.quadraticCurveTo(-4, headY + 12, 0, headY + 11);
-    ctx.quadraticCurveTo(4, headY + 12, 9, headY + 9);
-    ctx.lineTo(8, headY + 11);
-    ctx.quadraticCurveTo(0, headY + 14, -8, headY + 11);
-    ctx.closePath();
-    ctx.fill();
-
-    // Full beard (chunky, white/grey, covering jaw)
-    ctx.fillStyle = s.beard;
-    ctx.beginPath();
-    ctx.moveTo(-17, headY + 8);
-    ctx.quadraticCurveTo(-22, headY + 22, -10, headY + 28);
-    ctx.lineTo(10, headY + 28);
-    ctx.quadraticCurveTo(22, headY + 22, 17, headY + 8);
-    ctx.lineTo(15, headY + 11);
-    ctx.quadraticCurveTo(0, headY + 22, -15, headY + 11);
-    ctx.closePath();
-    ctx.fill();
-    // Beard texture flecks
+    // Beard — VERY prominent, nearly full-face. Covers cheeks down to neck.
     ctx.fillStyle = s.beardDark;
-    for (let i = -6; i <= 6; i += 4) {
-      ctx.fillRect(i - 1, headY + 16 + ((i * 2) & 3), 2, 2);
-    }
-    ctx.fillRect(-12, headY + 18, 2, 2);
-    ctx.fillRect(10, headY + 19, 2, 2);
+    ctx.beginPath();
+    // outer beard shape (slightly larger for outline)
+    ctx.moveTo(-22, headY + 4);
+    ctx.quadraticCurveTo(-25, headY + 22, -13, headY + 32);
+    ctx.lineTo(13, headY + 32);
+    ctx.quadraticCurveTo(25, headY + 22, 22, headY + 4);
+    ctx.lineTo(19, headY + 6);
+    ctx.quadraticCurveTo(13, headY + 14, 8, headY + 12);
+    ctx.lineTo(-8, headY + 12);
+    ctx.quadraticCurveTo(-13, headY + 14, -19, headY + 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = s.beard; // white/grey main beard
+    ctx.beginPath();
+    ctx.moveTo(-20, headY + 5);
+    ctx.quadraticCurveTo(-23, headY + 21, -12, headY + 30);
+    ctx.lineTo(12, headY + 30);
+    ctx.quadraticCurveTo(23, headY + 21, 20, headY + 5);
+    ctx.lineTo(17, headY + 7);
+    ctx.quadraticCurveTo(12, headY + 14, 7, headY + 13);
+    ctx.lineTo(-7, headY + 13);
+    ctx.quadraticCurveTo(-12, headY + 14, -17, headY + 7);
+    ctx.closePath();
+    ctx.fill();
 
-    // Mouth — small line peeking through beard
+    // Mustache (curved over upper lip, white)
+    ctx.fillStyle = s.beard;
+    ctx.beginPath();
+    ctx.moveTo(-10, headY + 10);
+    ctx.quadraticCurveTo(-5, headY + 13, 0, headY + 12);
+    ctx.quadraticCurveTo(5, headY + 13, 10, headY + 10);
+    ctx.lineTo(8, headY + 13);
+    ctx.quadraticCurveTo(0, headY + 16, -8, headY + 13);
+    ctx.closePath();
+    ctx.fill();
+
+    // Beard wisps / texture
+    ctx.fillStyle = s.beardDark;
+    for (let i = 0; i < 8; i++) {
+      ctx.fillRect(-15 + i * 4, headY + 18 + (i & 1) * 2, 2, 2);
+    }
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.fillRect(-10, headY + 22, 2, 2);
+    ctx.fillRect(8, headY + 24, 2, 2);
+
+    // Warm mouth (slight smile peeking through beard)
     if (f.stance === "hurt") {
       ctx.fillStyle = "#3a0a0a";
-      ctx.fillRect(-4, headY + 13, 8, 3);
+      ctx.fillRect(-4, headY + 14, 8, 3);
     } else {
-      ctx.fillStyle = "#3a1010";
-      ctx.fillRect(-3, headY + 13, 6, 1);
+      ctx.strokeStyle = "#3a1010";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-4, headY + 15);
+      ctx.quadraticCurveTo(0, headY + 17, 4, headY + 15);
+      ctx.stroke();
     }
   }
 
@@ -1587,6 +1871,7 @@ canvas#stage {
   }
 
   // ---------- CAPITÃO DIREITA (Bolsonaro parody) ----------
+  // Tall and lean: head sits high, narrow torso, long legs.
   function drawCapitao(f, t) {
     const s = f.spec;
     const off = poseOffsets(f, t);
@@ -1594,78 +1879,88 @@ canvas#stage {
     if (f.stance === "ko") { drawCapitaoKO(f); return; }
 
     const yShift = off.bob + off.lean + off.crouchY;
-    const headY = -FH + 22 + yShift;
-    const torsoTop = -FH + 40 + yShift;
-    const torsoH = 50 - off.crouchY;
+    const headY = -FH + 18 + yShift;          // higher (Lula is at -FH + 32)
+    const torsoTop = -FH + 38 + yShift;
+    const torsoH = 48 - off.crouchY;
     const torsoBot = torsoTop + torsoH;
-    const torsoHalfW = 26;
+    const torsoHalfW = 22;                    // narrower torso
 
-    // Legs (olive trousers tucked into combat boots)
+    // Long legs — pants run the rest of the way to feet (~38 tall)
+    const legH = -torsoBot;                   // distance from torsoBot to feet (y=0)
     if (f.stance === "walk") {
       const a = off.legShuffle * 14;
-      drawCapLeg(-13 - a * 0.4, torsoBot, 16, 30 - off.crouchY, s);
-      drawCapLeg(7  + a * 0.4, torsoBot, 16, 30 - off.crouchY, s);
+      drawCapLeg(-12 - a * 0.4, torsoBot, 14, legH - off.crouchY, s);
+      drawCapLeg(-2 + a * 0.4, torsoBot, 14, legH - off.crouchY, s);
     } else if (f.stance === "jump") {
-      drawCapLeg(-12, torsoBot - 4, 14, 22, s);
-      drawCapLeg(8,   torsoBot - 4, 14, 22, s);
+      drawCapLeg(-12, torsoBot - 4, 14, 24, s);
+      drawCapLeg(0,   torsoBot - 4, 14, 24, s);
     } else {
-      drawCapLeg(-13, torsoBot, 16, 30 - off.crouchY, s);
-      drawCapLeg(7,   torsoBot, 16, 30 - off.crouchY, s);
+      drawCapLeg(-12, torsoBot, 14, legH - off.crouchY, s);
+      drawCapLeg(-2,  torsoBot, 14, legH - off.crouchY, s);
     }
 
-    // Torso — base olive/camo
+    // Torso — narrow, with strong outline so the lean profile reads
     ctx.fillStyle = s.camoA;
     rectChunky(-torsoHalfW, torsoTop, torsoHalfW * 2, torsoH);
     ctx.fillStyle = s.shirt;
     ctx.fillRect(-torsoHalfW + 1, torsoTop + 1, torsoHalfW * 2 - 2, torsoH - 2);
 
-    // Camo blotches — multi-layer for proper texture
+    // CAMO PATTERN — bigger, more obvious blotches with three shades
+    // Big dark blotches
     ctx.fillStyle = s.camoA;
-    ctx.beginPath(); ctx.ellipse(-15, torsoTop + 8, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(8,   torsoTop + 18, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(-8,  torsoTop + 30, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(13,  torsoTop + 38, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-12, torsoTop + 6,  9, 6, 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(8,   torsoTop + 14, 10, 6, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-4,  torsoTop + 24, 8, 5, 0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(13,  torsoTop + 32, 7, 5, 0.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-15, torsoTop + 38, 6, 4, -0.2, 0, Math.PI * 2); ctx.fill();
+    // Light olive highlight blotches
     ctx.fillStyle = s.camoB;
-    ctx.beginPath(); ctx.ellipse(-3, torsoTop + 12, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(15, torsoTop + 8,  4, 3, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(-18,torsoTop + 22, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(2,  torsoTop + 36, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-2, torsoTop + 10, 5, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(15, torsoTop + 4,  5, 3, -0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-18,torsoTop + 18, 5, 3, 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(4,  torsoTop + 36, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    // Tan accents
     ctx.fillStyle = s.camoC;
-    ctx.fillRect(-12, torsoTop + 4, 4, 3);
-    ctx.fillRect(7,   torsoTop + 26, 4, 3);
-    ctx.fillRect(-20, torsoTop + 14, 3, 2);
+    ctx.fillRect(-9, torsoTop + 4, 4, 3);
+    ctx.fillRect(8,  torsoTop + 24, 4, 3);
+    ctx.fillRect(-19, torsoTop + 12, 3, 2);
+    // Diagonal seam line for tactical look
+    ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-torsoHalfW + 2, torsoTop + 22);
+    ctx.lineTo(torsoHalfW - 2, torsoTop + 22);
+    ctx.stroke();
 
-    // Collar (V neck)
+    // V-neck collar
     ctx.fillStyle = s.camoA;
     ctx.beginPath();
     ctx.moveTo(-7, torsoTop);
     ctx.lineTo(0,  torsoTop + 9);
     ctx.lineTo(7,  torsoTop);
     ctx.closePath(); ctx.fill();
-    // Neck
+    // Skin neck (longer, narrow)
     ctx.fillStyle = s.skin;
-    ctx.fillRect(-6, torsoTop, 12, 5);
+    ctx.fillRect(-5, torsoTop, 10, 5);
 
-    // Medal ribbons (3 small, on left chest)
+    // Medal ribbons (3 stacked, on left chest)
     const medalY = torsoTop + 8;
-    drawCapMedal(-15, medalY,     s.medal1, s.medal2);
-    drawCapMedal(-15, medalY + 8, s.medal1, s.medal3);
-    drawCapMedal(-15, medalY + 16,s.medal1, s.shirt);
-    // small star pin on right side of chest
+    drawCapMedal(-13, medalY,     s.medal1, s.medal2);
+    drawCapMedal(-13, medalY + 8, s.medal1, s.medal3);
+    drawCapMedal(-13, medalY + 16,s.medal1, "#5a7547");
+    // Yellow star pin on right chest
     ctx.fillStyle = s.accent;
-    drawStar(13, torsoTop + 12, 3.5, 5);
+    drawStar(11, torsoTop + 12, 3.5, 5);
     ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 1; ctx.stroke();
 
     // Belt
     ctx.fillStyle = s.belt;
     ctx.fillRect(-torsoHalfW, torsoBot - 6, torsoHalfW * 2, 6);
-    // Buckle (steel)
     ctx.fillStyle = s.buckle;
     ctx.fillRect(-5, torsoBot - 5, 10, 4);
     ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 1;
     ctx.strokeRect(-5, torsoBot - 5, 10, 4);
 
-    // Aura (special active) — green/yellow
+    // Aura (special active)
     if (ph === "active" && f.attackKind === "special") {
       ctx.save();
       ctx.globalAlpha = 0.5;
@@ -1679,119 +1974,139 @@ canvas#stage {
       ctx.restore();
     }
 
-    // Arms
     drawCapitaoArms(f, ph, torsoTop, off, s);
-
-    // Head
     drawCapitaoHead(f, headY, s);
   }
 
   function drawCapitaoHead(f, headY, s) {
-    // Slick-back hair shape behind the head
+    // Short military haircut visible under the beret — show as dark ring
     ctx.fillStyle = s.hair;
     ctx.beginPath();
-    ctx.ellipse(0, headY - 6, 22, 18, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, headY - 4, 19, 22, 0, 0, Math.PI * 2);
     ctx.fill();
     // Grey at temples
     ctx.fillStyle = s.hairGrey;
-    ctx.fillRect(-19, headY - 4, 4, 4);
-    ctx.fillRect(15,  headY - 4, 4, 4);
+    ctx.fillRect(-18, headY - 2, 3, 6);
+    ctx.fillRect(15,  headY - 2, 3, 6);
+    // Sideburns (short)
+    ctx.fillStyle = s.hair;
+    ctx.fillRect(-17, headY + 2, 3, 6);
+    ctx.fillRect(14,  headY + 2, 3, 6);
 
-    // Skin face — slightly leaner than Lula
+    // LEAN narrow face — taller than wide
     ctx.fillStyle = s.skin;
     ctx.beginPath();
-    ctx.ellipse(0, headY, 20, 22, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, headY + 1, 17, 24, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Strong jaw shading
+    // Strong angular jaw — flatten the bottom and push it forward
+    ctx.fillStyle = s.skin;
+    ctx.beginPath();
+    ctx.moveTo(-15, headY + 14);
+    ctx.lineTo(-13, headY + 22);
+    ctx.lineTo(13,  headY + 22);
+    ctx.lineTo(15,  headY + 14);
+    ctx.closePath();
+    ctx.fill();
+    // Jaw shading line
+    ctx.strokeStyle = s.skinDark; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(-14, headY + 18);
+    ctx.lineTo(14,  headY + 18);
+    ctx.stroke();
+    // Cheek hollow
     ctx.fillStyle = s.skinShade;
-    ctx.beginPath();
-    ctx.ellipse(2, headY + 12, 16, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(-15, headY + 6, 4, 8);
+    ctx.fillRect(11,  headY + 6, 4, 8);
 
-    // Ears
+    // Ears (small, set back on lean head)
     ctx.fillStyle = s.skinDark;
-    ctx.beginPath(); ctx.ellipse(-21, headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(21,  headY + 2, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-18, headY + 4, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(18,  headY + 4, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
 
-    // Stern eyebrows — heavy, angled DOWN inward (frown)
-    ctx.fillStyle = "#1a0e08";
+    // Heavy angled eyebrows — frown
+    ctx.fillStyle = "#0e0e0e";
     ctx.beginPath();
-    ctx.moveTo(-15, headY - 9);
-    ctx.lineTo(-3,  headY - 4);
-    ctx.lineTo(-3,  headY - 1);
-    ctx.lineTo(-15, headY - 5);
+    ctx.moveTo(-14, headY - 7);
+    ctx.lineTo(-3,  headY - 2);
+    ctx.lineTo(-3,  headY + 1);
+    ctx.lineTo(-14, headY - 3);
     ctx.closePath(); ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(15,  headY - 9);
-    ctx.lineTo(3,   headY - 4);
-    ctx.lineTo(3,   headY - 1);
-    ctx.lineTo(15,  headY - 5);
+    ctx.moveTo(14,  headY - 7);
+    ctx.lineTo(3,   headY - 2);
+    ctx.lineTo(3,   headY + 1);
+    ctx.lineTo(14,  headY - 3);
     ctx.closePath(); ctx.fill();
 
-    // Eyes — narrow / intense
+    // SQUINTING eyes — narrow horizontal slits
     if (f.stance === "hurt") {
       ctx.fillStyle = "#111";
-      ctx.fillRect(-9, headY, 5, 2);
-      ctx.fillRect(4, headY, 5, 2);
+      ctx.fillRect(-9, headY + 1, 5, 2);
+      ctx.fillRect(4, headY + 1, 5, 2);
     } else {
+      // White slits (very narrow — squinting)
       ctx.fillStyle = "#fff";
-      ctx.fillRect(-10, headY - 1, 7, 4);
-      ctx.fillRect(4,   headY - 1, 7, 4);
-      ctx.fillStyle = "#1a0e08";
-      ctx.fillRect(-7, headY - 1, 3, 4);
-      ctx.fillRect(7,  headY - 1, 3, 4);
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(-5, headY - 1, 1, 1);
-      ctx.fillRect(9,  headY - 1, 1, 1);
+      ctx.fillRect(-10, headY + 1, 7, 2);
+      ctx.fillRect(4,   headY + 1, 7, 2);
+      // Pupils — dark
+      ctx.fillStyle = "#0e0e0e";
+      ctx.fillRect(-7, headY + 1, 3, 2);
+      ctx.fillRect(6,  headY + 1, 3, 2);
+      // Eye-bag shading underneath
+      ctx.fillStyle = s.skinShade;
+      ctx.fillRect(-10, headY + 4, 7, 1);
+      ctx.fillRect(4,   headY + 4, 7, 1);
     }
 
-    // Long, narrow nose
-    ctx.fillStyle = s.skinDark;
+    // Long sharp nose with a slight bridge ridge
+    ctx.fillStyle = s.skin;
     ctx.beginPath();
-    ctx.moveTo(-2, headY + 2);
-    ctx.lineTo(2,  headY + 2);
-    ctx.lineTo(3,  headY + 9);
-    ctx.lineTo(-3, headY + 9);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
-    ctx.fillRect(-2, headY + 9, 1, 1);
-    ctx.fillRect(1,  headY + 9, 1, 1);
+    ctx.moveTo(-2, headY + 4);
+    ctx.lineTo(2,  headY + 4);
+    ctx.lineTo(3,  headY + 11);
+    ctx.lineTo(-3, headY + 11);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = s.skinShade; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, headY + 4); ctx.lineTo(0, headY + 11); ctx.stroke();
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(-2, headY + 12, 1, 1);
+    ctx.fillRect(1,  headY + 12, 1, 1);
 
-    // Frown mouth
-    ctx.strokeStyle = "#3a1010";
-    ctx.lineWidth = 2.5;
+    // THIN-LIPPED frown line
+    ctx.strokeStyle = "#2a0808";
+    ctx.lineWidth = 1.5;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(-6, headY + 14);
-    ctx.quadraticCurveTo(0, headY + 12, 6, headY + 14);
+    ctx.moveTo(-6, headY + 16);
+    ctx.quadraticCurveTo(0, headY + 14.5, 6, headY + 16);
     ctx.stroke();
     ctx.lineCap = "butt";
 
-    // Chin cleft
+    // Chin cleft (more pronounced)
     ctx.fillStyle = s.skinDark;
-    ctx.fillRect(-1, headY + 17, 2, 2);
+    ctx.fillRect(-1, headY + 19, 2, 3);
 
-    // Beret — dark olive military, tilted
-    // Brim band
+    // Olive military beret — tilted, with red band trim and yellow star
     ctx.fillStyle = s.capBand;
-    ctx.fillRect(-18, headY - 11, 28, 4);
-    // Beret crown (tilted ellipse)
+    ctx.fillRect(-17, headY - 11, 26, 4);
     ctx.fillStyle = s.cap;
     ctx.beginPath();
-    ctx.ellipse(4, headY - 16, 24, 10, -0.2, 0, Math.PI * 2);
+    ctx.ellipse(4, headY - 16, 22, 10, -0.22, 0, Math.PI * 2);
     ctx.fill();
-    // Beret highlight
-    ctx.fillStyle = "rgba(255,255,255,0.07)";
+    // Beret crease (highlight + shadow)
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
     ctx.beginPath();
-    ctx.ellipse(2, headY - 19, 18, 5, -0.2, 0, Math.PI * 2);
+    ctx.ellipse(2, headY - 20, 16, 4, -0.22, 0, Math.PI * 2);
     ctx.fill();
-    // Red trim accent
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fillRect(-12, headY - 8, 18, 1);
+    // Red accent strip on band
     ctx.fillStyle = s.capRedAccent;
-    ctx.fillRect(-8, headY - 9, 12, 2);
-
-    // Beret yellow STAR insignia on left (the wearer's right)
+    ctx.fillRect(-14, headY - 9, 18, 2);
+    // Beret yellow STAR insignia
     ctx.fillStyle = s.capStar;
-    drawStar(10, headY - 18, 4, 5);
+    drawStar(10, headY - 17, 4, 5);
     ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 1; ctx.stroke();
   }
 
@@ -2384,6 +2699,44 @@ canvas#stage {
   }
 
   // ============================================================
+  // SELECT-SCREEN PORTRAITS
+  // Renders Zé and Capitão into the small canvases inside the select cards,
+  // reusing the existing drawZe / drawCapitao functions with a fake fighter.
+  // ============================================================
+  function drawSelectPortraits() {
+    const main = ctx;
+    document.querySelectorAll("#select .select-portrait").forEach((cv) => {
+      const which = cv.dataset.portrait;
+      const c = cv.getContext("2d");
+      c.imageSmoothingEnabled = false;
+      c.clearRect(0, 0, cv.width, cv.height);
+      // Swap the file-scoped ctx so drawZe/drawCapitao render to this canvas.
+      ctx = c;
+      try {
+        c.save();
+        c.translate(cv.width / 2, cv.height - 6);
+        c.scale(1.0, 1.0);
+        // Shadow
+        c.fillStyle = "rgba(0,0,0,0.4)";
+        c.beginPath(); c.ellipse(0, 0, 30, 7, 0, 0, Math.PI * 2); c.fill();
+        const fakeSpec = which === "ze" ? ZE : CAPITAO;
+        const fake = {
+          spec: fakeSpec, side: which === "ze" ? "p1" : "p2",
+          x: 0, y: 0, vx: 0, vy: 0, hp: 100, maxHp: 100, facing: 1,
+          stance: "idle", stanceT: 0, stanceDur: 0, attackKind: null,
+          hitConnected: false, cd: { punch: 0, kick: 0, special: 0 },
+          onGround: true, blocking: false, flash: 0,
+        };
+        if (which === "ze") drawZe(fake, timeNow);
+        else drawCapitao(fake, timeNow);
+        c.restore();
+      } finally {
+        ctx = main;
+      }
+    });
+  }
+
+  // ============================================================
   // FAKE QR
   // ============================================================
   function buildFakeQR() {
@@ -2445,11 +2798,46 @@ canvas#stage {
       showMenu();
     });
 
-    // Wire menu buttons → start a match at chosen difficulty
+    // Wire menu buttons → go to character select
     document.querySelectorAll("#menu .menu-btn").forEach((btn) => {
       const diff = btn.dataset.difficulty;
       if (!diff) return; // online button is disabled
-      btn.addEventListener("click", () => startMatch(diff));
+      btn.addEventListener("click", () => startSelect(diff));
+    });
+
+    // Character select: clicking a card picks that fighter for the human
+    document.querySelectorAll("#select .select-card").forEach((btn) => {
+      const side = btn.dataset.side;
+      btn.addEventListener("click", () => startMatch(side));
+    });
+    el("select-back").addEventListener("click", () => {
+      hideSelect(); phase = "title"; phaseT = 0; showMenu();
+    });
+    // Render the small fighter portraits in the select cards
+    drawSelectPortraits();
+
+    // Pause button
+    el("pause-btn").addEventListener("click", () => {
+      if (phase !== "fight" && phase !== "ready" && phase !== "roundEnd") return;
+      paused = true;
+      showPauseModal();
+    });
+    // Modal actions (delegated)
+    el("pause-modal").addEventListener("click", (e) => {
+      const t = e.target.closest("[data-action]");
+      if (!t) return;
+      const action = t.dataset.action;
+      if (action === "resume") { paused = false; hidePauseModal(); }
+      else if (action === "back-to-menu") { paused = false; hidePauseModal(); backToTitle(); }
+    });
+
+    // End-of-match actions
+    el("end-actions").addEventListener("click", (e) => {
+      const t = e.target.closest("[data-action]");
+      if (!t) return;
+      const action = t.dataset.action;
+      if (action === "play-again") { replayMatch(); }
+      else if (action === "back-to-menu") { backToTitle(); }
     });
 
     // Wire touch controls (works for mouse too — useful for desktop testing)
