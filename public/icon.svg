@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+  <circle cx="256" cy="256" r="170" fill="#009c3b"/>
+  <path d="M256 120 L432 256 L256 392 L80 256 Z" fill="#ffdf00"/>
+  <circle cx="256" cy="256" r="70" fill="#002776"/>
+  <text x="256" y="280" font-family="system-ui,sans-serif" font-weight="900" font-size="72" text-anchor="middle" fill="#fff">BR</text>
+</svg>
