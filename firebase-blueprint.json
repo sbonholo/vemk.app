@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information for matching.",
+      "type": "object",
+      "properties": {
+        "nickname": { "type": "string", "description": "Public nickname" },
+        "photoUrl": { "type": "string", "description": "URL to profile picture" },
+        "gender": { "type": "string", "enum": ["man", "woman", "non-binary", "other"] },
+        "seeking": { "type": "array", "items": { "type": "string" }, "description": "Genders the user is interested in" },
+        "location": { "type": "object", "description": "Current geopoint" },
+        "geohash": { "type": "string" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "currentEventId": { "type": "string", "description": "ID of the event the user is currently at" },
+        "fcmToken": { "type": "string", "description": "Firebase Cloud Messaging Token for push notifications" },
+        "matchCount": { "type": "number" }
+      },
+      "required": ["nickname", "gender", "seeking"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "A nightlife event.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "venueName": { "type": "string" },
+        "address": { "type": "string" },
+        "startsAt": { "type": "string", "format": "date-time" },
+        "endsAt": { "type": "string", "format": "date-time" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "geohash": { "type": "string" }
+      }
+    },
+    "Match": {
+      "title": "Match",
+      "description": "A match between two users.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user1Id": { "type": "string" },
+        "user2Id": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "mutual"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "api": {}
+}
