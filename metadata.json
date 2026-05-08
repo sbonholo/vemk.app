@@ -1,0 +1,6 @@
+{
+  "name": "VemK - Match Maker de Eventos",
+  "description": "App de match maker focado em eventos, festas e bares. Encontre pessoas no mesmo local para conexões rápidas e dinâmicas.",
+  "requestFramePermissions": ["camera", "geolocation", "notifications"],
+  "majorCapabilities": ["real-time", "geolocation"]
+}
