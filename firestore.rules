@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return request.auth.token.claims['admin'] == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /databases/{database}/documents/users/{userId} {
+      // Read profile: any authenticated user
+      allow get: isSignedIn();
+      // Write own profile only
+      allow update, create: isOwner(userId);
+      allow delete: isAdmin();
+    }
+
+    // Matches Collection
+    match /databases/{database}/documents/matches/{matchId} {
+      allow get, list: request.auth.uid in resource.data.userIds;
+      allow create, update: request.auth.uid in resource.data.userIds;
+      allow delete: isOwner(resource.data.userIds[0]) || isAdmin();
+    }
+
+    // Messages subcollection
+    match /databases/{database}/documents/matches/{matchId}/documents/messages/{messageId} {
+      allow read: request.auth.uid in get(/matches/{matchId}).data.userIds;
+      allow create: request.auth.uid in get(/matches/{matchId}).data.userIds;
+    }
+
+    // Events Collection - read-only for all authenticated users
+    match /databases/{database}/documents/events/{eventId} {
+      allow get, list: isSignedIn();
+      allow create, update: isAdmin();
+      allow delete: isAdmin();
+    }
+
+    // Reports Collection
+    match /databases/{database}/documents/reports/{reportId} {
+      allow create: isSignedIn();
+      allow read, delete: isAdmin();
+    }
+  }
+}
