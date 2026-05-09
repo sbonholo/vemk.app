@@ -201,8 +201,7 @@ canvas#stage {
   .dp-left  { top: 60px; left: 0;    }
   .dp-right { top: 60px; left: 120px;}
   .dp-down  { top: 120px;left: 60px; }
-  /* Reserve room above the controls so canvas isn't hidden by them */
-  canvas#stage { max-height: calc(100dvh - 220px); }
+  /* Canvas fills the full screen; touch controls overlay translucently. */
 }
 
 /* ---- Mobile landscape: shrunk D-pad, all 3 attack buttons fit ---- */
@@ -215,7 +214,6 @@ canvas#stage {
   .dp-left  { top: 46px; left: 0;    }
   .dp-right { top: 46px; left: 92px; }
   .dp-down  { top: 92px; left: 46px; }
-  canvas#stage { max-height: calc(100dvh - 150px); }
 }
 
 /* Always show touch controls on coarse-pointer devices */
@@ -323,6 +321,21 @@ canvas#stage {
 #mute-btn:hover { background: rgba(20,20,20,0.7); }
 #mute-btn:active { transform: scale(0.94); }
 #mute-btn.muted { border-color: rgba(255, 100, 100, 0.55); color: #ff8a8a; }
+
+/* ---------- Fullscreen toggle (next to mute) ---------- */
+#fs-btn {
+  position: fixed; top: calc(env(safe-area-inset-top) + 8px); right: 64px; z-index: 100;
+  background: rgba(0,0,0,0.55); color: #fff;
+  border: 2px solid rgba(255, 215, 100, 0.55);
+  border-radius: 10px;
+  width: 44px; height: 36px; padding: 0;
+  font-size: 18px; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+#fs-btn:hover { background: rgba(20,20,20,0.7); }
+#fs-btn:active { transform: scale(0.94); }
 
 #pause-modal {
   position: fixed; inset: 0; z-index: 7;
@@ -606,6 +619,7 @@ canvas#stage {
 
 <button id="pause-btn" hidden aria-label="Pausar">⏸ PAUSAR</button>
 
+<button id="fs-btn" aria-label="Tela cheia">⛶</button>
 <button id="mute-btn" aria-label="Som ligado / desligado">🔊</button>
 
 <div id="online-badge">🌐 ONLINE</div>
@@ -5742,6 +5756,26 @@ canvas#stage {
     // Wake up the AudioContext on the very first user gesture anywhere on
     // the page (browsers refuse to resume audio without one). After the
     // first wake-up we remove the listener so it doesn't fire forever.
+    function goFullscreen() {
+      const el = document.documentElement;
+      try {
+        const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+        if (req) req.call(el).catch(() => {});
+      } catch (_) { /* user denied or not supported — ignore */ }
+    }
+    function exitFullscreen() {
+      try {
+        const fn = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+        if (fn) fn.call(document);
+      } catch (_) {}
+    }
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    }
+    function toggleFullscreen() {
+      if (isFullscreen()) exitFullscreen(); else goFullscreen();
+    }
+
     function firstGestureWake() {
       audio.ensure();
       // Now that the context is alive, fire up the title loop if we're
@@ -5749,6 +5783,8 @@ canvas#stage {
       if (phase === "title" || phase === "select") {
         audio.startTitleMusic();
       }
+      // Auto-enter fullscreen on first gesture (browsers allow it here).
+      goFullscreen();
       document.removeEventListener("pointerdown", firstGestureWake, true);
       document.removeEventListener("keydown",     firstGestureWake, true);
       document.removeEventListener("touchstart",  firstGestureWake, true);
@@ -5852,6 +5888,22 @@ canvas#stage {
       if (!nowMuted) audio.menuClick();
     });
     updateMuteBtn(audio.isMuted());
+
+    // Fullscreen toggle button — for users who escape fullscreen and
+    // want to re-enter, or to manually exit.
+    function updateFsBtn() {
+      const b = el("fs-btn");
+      if (!b) return;
+      b.textContent = isFullscreen() ? "⛶" : "⛶";
+      b.setAttribute("aria-label", isFullscreen() ? "Sair de tela cheia" : "Tela cheia");
+    }
+    el("fs-btn").addEventListener("click", () => {
+      audio.menuClick();
+      toggleFullscreen();
+    });
+    document.addEventListener("fullscreenchange", updateFsBtn);
+    document.addEventListener("webkitfullscreenchange", updateFsBtn);
+    updateFsBtn();
 
     // Wire touch controls (works for mouse too — useful for desktop testing).
     // On any touch-capable device we keep the overlay always visible, since
