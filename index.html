@@ -2458,47 +2458,212 @@ canvas#stage {
     ctx.fill();
   }
 
-  // ----- DISTANT SKYLINE (city lights at night, ministries always) + TV TOWER -----
+  // ----- BRASÍLIA HORIZON: Lake Paranoá + cerrado plateau + landmarks -----
+  // Brasília sits on a 1100m plateau in the cerrado biome, on the shore of an
+  // artificial lake. The architecture is famously horizontal — Niemeyer wanted
+  // the eye to read the sky, not silhouettes. So instead of a chunky skyline
+  // we draw a far-horizon water strip, soft cerrado hills, and a few iconic
+  // landmarks (TV Tower, Cathedral) standing alone against the openness.
   function drawDistantSkyline(r) {
-    // Distant skyline silhouette
-    ctx.fillStyle = getMinistryColor(r);
-    const heights = [42, 60, 36, 78, 54, 30, 88, 50, 64, 40, 70, 46, 58, 36, 72, 48, 90, 44];
-    let cur = 0;
-    for (let i = 0; i < heights.length; i++) {
-      const w = 56;
-      ctx.fillRect(cur, GROUND_Y - 110 - heights[i] * 0.3, w, heights[i] + 110);
-      cur += w;
+    const horizonY = GROUND_Y - 130;   // far horizon line
+
+    // ----- Lake Paranoá water strip -----
+    const lakeColor = (r === 1) ? "#5a9ac8"
+                    : (r === 3) ? "#0a1830"
+                    :             "#7a4858";   // sunset reflecting reddish
+    ctx.fillStyle = lakeColor;
+    ctx.fillRect(0, horizonY, W, 10);
+    // A second darker layer beneath for water depth
+    ctx.fillStyle = (r === 1) ? "rgba(40, 80, 120, 0.55)"
+                  : (r === 3) ? "rgba(8, 16, 36, 0.85)"
+                  :             "rgba(60, 30, 50, 0.55)";
+    ctx.fillRect(0, horizonY + 8, W, 4);
+    // Shimmering ripples
+    ctx.fillStyle = (r === 3) ? "rgba(120, 160, 220, 0.22)"
+                  : (r === 2) ? "rgba(255, 220, 180, 0.35)"
+                  :             "rgba(255, 255, 255, 0.35)";
+    for (let i = 0; i < 4; i++) {
+      const ry = horizonY + 1 + i * 2.5 + Math.sin(timeNow * 0.7 + i * 0.6) * 0.5;
+      ctx.fillRect(0, ry, W, 0.8);
     }
-    // Night-only: distant city lights — colored window dots
+
+    // ----- Cerrado plateau — soft rolling hills behind the city -----
+    const plateauColor = (r === 1) ? "rgba(110, 132, 96, 0.65)"
+                       : (r === 3) ? "rgba(18, 22, 44, 0.90)"
+                       :             "rgba(72, 42, 60, 0.72)";
+    ctx.fillStyle = plateauColor;
+    ctx.beginPath();
+    ctx.moveTo(0, horizonY + 12);
+    // Bezier-stitched gentle hills
+    const hills = [22, 36, 18, 42, 28, 38, 24, 32, 20];
+    const segW = W / (hills.length - 1);
+    for (let i = 0; i < hills.length - 1; i++) {
+      const x1 = i * segW;
+      const x2 = (i + 1) * segW;
+      const y1 = horizonY + 12 - hills[i];
+      const y2 = horizonY + 12 - hills[i + 1];
+      ctx.bezierCurveTo(
+        x1 + segW * 0.35, y1,
+        x1 + segW * 0.65, y2,
+        x2, y2
+      );
+    }
+    ctx.lineTo(W, GROUND_Y - 20);
+    ctx.lineTo(0, GROUND_Y - 20);
+    ctx.closePath();
+    ctx.fill();
+
+    // Night-only: distant city lights along the cerrado plateau
     if (r === 3) {
       const lightColors = ["#ffd84a", "#ffbf6a", "#ffc8a0", "#fff8c0", "#a0c8ff"];
-      for (let i = 0; i < 14; i++) {
-        const x = (i * 73) % W;
-        const y = GROUND_Y - 80 - (i * 17 % 80);
+      for (let i = 0; i < 18; i++) {
+        const x = (i * 53 + 7) % W;
+        const y = horizonY + 12 - ((i * 11) % 28) - 2;
         ctx.fillStyle = lightColors[i % lightColors.length];
-        ctx.fillRect(x, y, 3, 4);
+        ctx.fillRect(x, y, 2, 2);
+        if ((i * 7) % 3 === 0) {
+          ctx.fillStyle = "rgba(255, 216, 74, 0.20)";
+          ctx.fillRect(x - 1, y - 1, 4, 4);
+        }
       }
     }
-    // ----- TV Tower (Torre de Televisão) far left at x≈100 -----
-    const tvX = 100;
-    const tvBase = GROUND_Y - 60;
-    const tvTop = GROUND_Y - 60 - 120;   // 120px tall
-    // Thin vertical line (2px)
-    ctx.fillStyle = r === 3 ? "rgba(180, 160, 130, 0.55)" : "rgba(140, 110, 90, 0.65)";
-    ctx.fillRect(tvX - 1, tvTop, 2, 120);
-    // Observation deck at 2/3 height
-    const deckY = tvTop + (120 * 2 / 3);
-    ctx.fillStyle = r === 3 ? "rgba(200, 180, 140, 0.85)" : "rgba(220, 210, 180, 0.7)";
-    ctx.fillRect(tvX - 10, deckY - 4, 20, 8);
-    // Tiny circle at the very top
+
+    // ----- Niemeyer landmarks against the horizon -----
+    drawTVTower(80, r);
+    drawCathedral(195, r);
+  }
+
+  // TV Tower (Torre de Televisão) — thin vertical mast with observation deck
+  function drawTVTower(tvX, r) {
+    const tvHeight = 130;
+    const tvBase = GROUND_Y - 22;
+    const tvTop = tvBase - tvHeight;
+    // Splayed quadripod base (legs)
+    ctx.strokeStyle = (r === 3) ? "rgba(180, 160, 130, 0.55)" : "rgba(140, 110, 90, 0.75)";
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(tvX, tvTop + 2, 3, 0, Math.PI * 2);
-    ctx.fill();
-    // Red blinking warning at top (always-on at night, blinking otherwise)
+    ctx.moveTo(tvX - 7, tvBase); ctx.lineTo(tvX, tvBase - 28);
+    ctx.moveTo(tvX + 7, tvBase); ctx.lineTo(tvX, tvBase - 28);
+    ctx.stroke();
+    // Main mast
+    ctx.fillStyle = (r === 3) ? "rgba(180, 160, 130, 0.65)" : "rgba(140, 110, 90, 0.80)";
+    ctx.fillRect(tvX - 1, tvTop, 2, tvHeight - 28);
+    // Observation deck at ~55% height
+    const deckY = tvTop + Math.floor(tvHeight * 0.45);
+    ctx.fillStyle = (r === 3) ? "rgba(200, 180, 140, 0.90)" : "rgba(220, 210, 180, 0.85)";
+    ctx.fillRect(tvX - 10, deckY - 3, 20, 7);
+    // Deck windows (tiny dark dots, or lit dots at night)
+    ctx.fillStyle = (r === 3) ? "#ffd84a" : "rgba(0, 0, 0, 0.45)";
+    for (let i = 0; i < 5; i++) ctx.fillRect(tvX - 8 + i * 4, deckY - 1, 1, 2);
+    // Antenna mast above the deck (thinner)
+    ctx.fillStyle = (r === 3) ? "rgba(160, 140, 110, 0.55)" : "rgba(120, 90, 70, 0.85)";
+    ctx.fillRect(tvX - 0.5, tvTop - 14, 1, 14);
+    // Top sphere
+    ctx.fillStyle = (r === 3) ? "rgba(220, 200, 150, 0.85)" : "rgba(180, 150, 120, 0.85)";
+    ctx.beginPath(); ctx.arc(tvX, tvTop - 4, 2.5, 0, Math.PI * 2); ctx.fill();
+    // Red warning light (always-on at night, blinking otherwise)
     if (r === 3 || (Math.floor(timeNow * 1.5) % 2 === 0)) {
       ctx.fillStyle = "rgba(255, 60, 60, 0.95)";
-      ctx.beginPath(); ctx.arc(tvX, tvTop - 4, 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(tvX, tvTop - 16, 2.2, 0, Math.PI * 2); ctx.fill();
     }
+  }
+
+  // ----- NIEMEYER CATHEDRAL (Catedral Metropolitana) — hyperboloid crown -----
+  // 16 white concrete columns curving up from a circular base, pinching in
+  // the middle and flaring out at the top to form a crown of thorns. We draw
+  // a stylized 2D side view: circular base, 11 visible curving ribs, top
+  // ring, and a central cross.
+  function drawCathedral(cx, r) {
+    const baseY = GROUND_Y - 20;
+    const cathH = 78;
+    const baseHalfW = 32;
+    const pinchHalfW = 14;       // narrowest waist
+    const topHalfW = 30;         // crown rim
+    const pinchY = baseY - cathH * 0.55;
+    const topY = baseY - cathH;
+
+    const colColor = (r === 1) ? "rgba(245, 244, 238, 0.95)"
+                   : (r === 3) ? "rgba(140, 150, 180, 0.85)"
+                   :             "rgba(245, 222, 168, 0.92)";
+    const shadowColor = (r === 1) ? "rgba(0, 0, 0, 0.20)"
+                      : (r === 3) ? "rgba(0, 0, 0, 0.50)"
+                      :             "rgba(120, 60, 30, 0.30)";
+
+    // Inner shadow / interior glow visible between the ribs
+    const innerColor = (r === 1) ? "rgba(180, 200, 220, 0.55)"
+                     : (r === 3) ? "rgba(255, 220, 130, 0.45)"   // lit interior at night
+                     :             "rgba(120, 70, 50, 0.45)";
+    ctx.fillStyle = innerColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - baseHalfW + 4, baseY);
+    ctx.bezierCurveTo(
+      cx - baseHalfW + 2, pinchY + 8,
+      cx - pinchHalfW,    pinchY,
+      cx - pinchHalfW,    pinchY - 4
+    );
+    ctx.lineTo(cx + pinchHalfW, pinchY - 4);
+    ctx.bezierCurveTo(
+      cx + pinchHalfW,    pinchY,
+      cx + baseHalfW - 2, pinchY + 8,
+      cx + baseHalfW - 4, baseY
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    // 11 visible ribs — for each rib, a bezier from base to top through pinch
+    ctx.strokeStyle = colColor;
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = "round";
+    for (let i = 0; i < 11; i++) {
+      const t = (i / 10);                    // 0..1
+      // Side-view: ribs spread across baseHalfW at the base
+      const baseSide = (t - 0.5) * 2;        // -1..+1
+      const xb = cx + baseSide * baseHalfW;
+      const xp = cx + baseSide * pinchHalfW * 0.85;
+      const xt = cx + baseSide * topHalfW;
+      ctx.beginPath();
+      ctx.moveTo(xb, baseY);
+      // Curve in toward the pinch
+      ctx.bezierCurveTo(
+        xb, baseY - cathH * 0.20,
+        xp, pinchY + 4,
+        xp, pinchY
+      );
+      // Curve out to crown top
+      ctx.bezierCurveTo(
+        xp, pinchY - 8,
+        xt, topY + 12,
+        xt, topY
+      );
+      ctx.stroke();
+    }
+    ctx.lineCap = "butt";
+
+    // Crown top ring (subtle ellipse closing the crown)
+    ctx.strokeStyle = colColor;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(cx, topY, topHalfW, 4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner top ring shadow
+    ctx.fillStyle = shadowColor;
+    ctx.beginPath();
+    ctx.ellipse(cx, topY + 1, topHalfW - 4, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cross on top
+    ctx.fillStyle = colColor;
+    ctx.fillRect(cx - 0.5, topY - 9, 1, 9);
+    ctx.fillRect(cx - 3,   topY - 6, 6, 1);
+
+    // Reflection pool ring at the base
+    ctx.fillStyle = (r === 1) ? "rgba(120, 170, 200, 0.40)"
+                  : (r === 3) ? "rgba(40, 60, 100, 0.55)"
+                  :             "rgba(180, 130, 110, 0.40)";
+    ctx.beginPath();
+    ctx.ellipse(cx, baseY + 1, baseHalfW + 3, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // ----- CONGRESS BUILDING (slab + towers + dome + bowl + ramps) -----
@@ -2692,11 +2857,16 @@ canvas#stage {
       ctx.fill();
     }
 
-    // ----- Palm trees, drawn AFTER buildings so trunks read against them -----
-    drawPalmTree(150, GROUND_Y, r);
-    drawPalmTree(220, GROUND_Y, r);
-    drawPalmTree(W - 150, GROUND_Y, r);
-    drawPalmTree(W - 220, GROUND_Y, r);
+    // ----- Ipê amarelo trees (Brazil's flowering national tree) — drawn
+    // AFTER buildings so the canopy reads against the slab. Positioned
+    // outside the Cathedral footprint and clear of dome/bowl silhouettes.
+    drawIpeTree(135, GROUND_Y, r);
+    drawIpeTree(420, GROUND_Y, r);
+    drawIpeTree(W - 420, GROUND_Y, r);
+    drawIpeTree(W - 135, GROUND_Y, r);
+
+    // ----- Cerrado grass tufts in the foreground -----
+    drawCerradoGrass(r);
   }
 
   // Ministry building row — receding-perspective slabs
@@ -2776,36 +2946,132 @@ canvas#stage {
     }
   }
 
-  // Palm tree — round-aware silhouette
-  function drawPalmTree(x, y, r) {
-    const trunkColor = r === 3 ? "rgba(15, 18, 28, 0.95)" : "#4a3018";
-    const frondColor = r === 3 ? "rgba(15, 18, 28, 0.95)" : "#1a4020";
-    const trunkH = 60;
-    // Trunk (3px wide, 60px tall)
+  // Ipê amarelo — Brazil's national tree, blooms in vivid yellow during the
+  // Brasília dry season. Twisted grey trunk, wide rounded canopy of dense
+  // yellow flowers (no green leaves while in bloom). At night the canopy
+  // reads as a soft mass; at sunset it picks up warm tones.
+  function drawIpeTree(x, y, r) {
+    const trunkColor = (r === 3) ? "rgba(20, 22, 36, 0.95)"
+                     : (r === 2) ? "#3a2a1a"
+                     :             "#4a3a26";
+    // Trunk: slightly tapered, with a subtle leftward lean
+    const trunkH = 56;
+    const trunkTopY = y - trunkH;
     ctx.fillStyle = trunkColor;
-    ctx.fillRect(x - 1.5, y - trunkH, 3, trunkH);
-    // Trunk segments (stylized)
+    ctx.beginPath();
+    ctx.moveTo(x - 2.5, y);
+    ctx.lineTo(x + 2.5, y);
+    ctx.lineTo(x + 1.5, trunkTopY);
+    ctx.lineTo(x - 1.5, trunkTopY);
+    ctx.closePath();
+    ctx.fill();
+    // Bark texture lines
     if (r !== 3) {
-      ctx.fillStyle = "rgba(0,0,0,0.3)";
-      for (let i = 0; i < 6; i++) ctx.fillRect(x - 1.5, y - trunkH + 8 + i * 9, 3, 1);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+      ctx.fillRect(x - 0.5, trunkTopY + 4, 0.7, trunkH - 6);
     }
-    // 6 fronds radiating outward (each 20px), slightly drooping
-    ctx.strokeStyle = frondColor;
-    ctx.lineWidth = 3;
+    // Two thin angled branches splitting at ~80% of trunk height
+    ctx.strokeStyle = trunkColor;
+    ctx.lineWidth = 1.5;
     ctx.lineCap = "round";
-    const fronds = [
-      { dx: -22, dy: -8 }, { dx: -16, dy: -18 }, { dx: -4, dy: -22 },
-      { dx: 4, dy: -22 },  { dx: 16, dy: -18 },  { dx: 22, dy: -8 },
-    ];
-    for (const f of fronds) {
-      ctx.beginPath();
-      ctx.moveTo(x, y - trunkH);
-      // Slight droop: end below the straight-line endpoint
-      ctx.quadraticCurveTo(x + f.dx * 0.6, y - trunkH + f.dy * 0.7,
-                           x + f.dx,        y - trunkH + f.dy + 4);
-      ctx.stroke();
-    }
+    const splitY = trunkTopY + 6;
+    ctx.beginPath();
+    ctx.moveTo(x - 1, splitY); ctx.lineTo(x - 11, trunkTopY - 6);
+    ctx.moveTo(x + 1, splitY); ctx.lineTo(x + 11, trunkTopY - 6);
+    ctx.moveTo(x,     splitY); ctx.lineTo(x,      trunkTopY - 10);
+    ctx.stroke();
     ctx.lineCap = "butt";
+
+    // Canopy of yellow flowers — three overlapping puff balls
+    // Round-aware tones: bright yellow (day), warm amber (sunset), muted (night)
+    const flowerHi  = (r === 1) ? "#ffe83a"
+                    : (r === 2) ? "#ffc24a"
+                    :             "rgba(140, 130, 70, 0.85)";
+    const flowerMid = (r === 1) ? "#f5c820"
+                    : (r === 2) ? "#e89030"
+                    :             "rgba(110, 100, 50, 0.85)";
+    const flowerLo  = (r === 1) ? "#c89a08"
+                    : (r === 2) ? "#a05818"
+                    :             "rgba(70, 60, 28, 0.85)";
+
+    const cy = trunkTopY - 8;
+    // Back/lower mass (darker)
+    ctx.fillStyle = flowerLo;
+    ctx.beginPath();
+    ctx.arc(x - 8,  cy + 2, 14, 0, Math.PI * 2);
+    ctx.arc(x + 8,  cy + 2, 14, 0, Math.PI * 2);
+    ctx.arc(x,      cy + 6, 16, 0, Math.PI * 2);
+    ctx.fill();
+    // Mid mass
+    ctx.fillStyle = flowerMid;
+    ctx.beginPath();
+    ctx.arc(x - 10, cy - 1, 11, 0, Math.PI * 2);
+    ctx.arc(x + 10, cy - 1, 11, 0, Math.PI * 2);
+    ctx.arc(x,      cy - 4, 13, 0, Math.PI * 2);
+    ctx.arc(x - 4,  cy + 4, 10, 0, Math.PI * 2);
+    ctx.arc(x + 4,  cy + 4, 10, 0, Math.PI * 2);
+    ctx.fill();
+    // Highlights (bright top puffs catching the light)
+    ctx.fillStyle = flowerHi;
+    ctx.beginPath();
+    ctx.arc(x - 6,  cy - 6, 6, 0, Math.PI * 2);
+    ctx.arc(x + 6,  cy - 6, 6, 0, Math.PI * 2);
+    ctx.arc(x,      cy - 9, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Petal speckles for texture
+    const speckleColor = (r === 1) ? "rgba(255, 240, 80, 0.85)"
+                       : (r === 2) ? "rgba(255, 200, 100, 0.75)"
+                       :             "rgba(180, 170, 100, 0.55)";
+    ctx.fillStyle = speckleColor;
+    for (let i = 0; i < 7; i++) {
+      const ang = (i / 7) * Math.PI * 2 + 0.4;
+      const sx = x + Math.cos(ang) * 11;
+      const sy = cy + Math.sin(ang) * 8 - 1;
+      ctx.fillRect(sx, sy, 1.6, 1.6);
+    }
+
+    // A few fallen petals at the base (only daytime / sunset)
+    if (r !== 3) {
+      ctx.fillStyle = (r === 1) ? "rgba(220, 180, 30, 0.55)" : "rgba(200, 130, 40, 0.55)";
+      for (let i = 0; i < 6; i++) {
+        const px = x + ((i * 7) % 11) - 5 + ((i % 2) ? 8 : -8);
+        ctx.fillRect(px, y - 1, 1.5, 1.2);
+      }
+    }
+  }
+
+  // Cerrado grass tufts — low yellow-green tussocks in the foreground.
+  // Brasília is in the cerrado biome (tropical savanna); these tufts give
+  // the arena a sense of place between the Esplanada pavement and the dirt
+  // arena floor.
+  function drawCerradoGrass(r) {
+    const grassColor = (r === 1) ? "#7a8c3a"
+                     : (r === 2) ? "#6a4a28"
+                     :             "rgba(40, 50, 30, 0.85)";
+    const tipColor   = (r === 1) ? "#bdc56a"
+                     : (r === 2) ? "#c89058"
+                     :             "rgba(120, 130, 80, 0.65)";
+    // Deterministic positions across the foreground
+    const positions = [
+      40, 90, 175, 260, 320, 380, 450, 520, 580, 640, 710, 770, 845, 910,
+    ];
+    for (const tx of positions) {
+      const tH = 4 + ((tx * 7) % 4);
+      // Base clump
+      ctx.fillStyle = grassColor;
+      ctx.fillRect(tx - 3, GROUND_Y - tH, 6, tH);
+      // Tall blades
+      ctx.strokeStyle = tipColor;
+      ctx.lineWidth = 1;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(tx - 2, GROUND_Y); ctx.lineTo(tx - 3, GROUND_Y - tH - 2);
+      ctx.moveTo(tx,     GROUND_Y); ctx.lineTo(tx + 1, GROUND_Y - tH - 4);
+      ctx.moveTo(tx + 2, GROUND_Y); ctx.lineTo(tx + 3, GROUND_Y - tH - 1);
+      ctx.stroke();
+      ctx.lineCap = "butt";
+    }
   }
 
   // Tiny Brazilian flag for the slab pole
