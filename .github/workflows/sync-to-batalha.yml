@@ -12,7 +12,9 @@ name: Sync index.html to batalha-brasil
 on:
   push:
     branches: [export-batalha-brasil]
-    paths: [index.html]
+    paths:
+      - index.html
+      - CNAME
   workflow_dispatch:
 
 jobs:
@@ -32,19 +34,21 @@ jobs:
           token: ${{ secrets.BATALHA_DEPLOY_TOKEN }}
           path: target
 
-      - name: Copy index.html
-        run: cp source/index.html target/index.html
+      - name: Copy synced files
+        run: |
+          cp source/index.html target/index.html
+          cp source/CNAME      target/CNAME
 
       - name: Commit and push if changed
         working-directory: target
         run: |
           git config user.name  "vemk-sync-bot"
           git config user.email "vemk-sync-bot@users.noreply.github.com"
-          if git diff --quiet -- index.html; then
+          if git diff --quiet -- index.html CNAME; then
             echo "No changes to sync."
             exit 0
           fi
-          git add index.html
+          git add index.html CNAME
           SHORT_SHA="${GITHUB_SHA::7}"
-          git commit -m "Sync index.html from vemk.app@${SHORT_SHA}"
+          git commit -m "Sync from vemk.app@${SHORT_SHA}"
           git push origin main
