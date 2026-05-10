@@ -2669,7 +2669,10 @@ canvas#stage {
   // ----- CONGRESS BUILDING (slab + towers + dome + bowl + ramps) -----
   function drawCongressBuilding(r) {
     const cx = W / 2;
-    const slabBottom = GROUND_Y - 20;     // bottom of slab
+    // Slab is lifted on pilotis (Niemeyer's signature open-ground level).
+    // Visible gap between slab bottom and the Esplanada pavement: 15px.
+    const pilotisTop = GROUND_Y - 35;     // top of the open-ground gap
+    const slabBottom = pilotisTop;        // slab sits on top of pilotis
     const slabH = 50;                      // slab height
     const slabTop = slabBottom - slabH;    // top of slab
     const slabHalfW = 290;                 // slab is 580px wide
@@ -2734,7 +2737,30 @@ canvas#stage {
     ctx.closePath();
     ctx.fill();
 
-    // ----- SLAB BODY: 580×50 centered, bottom at GROUND_Y - 20 -----
+    // ----- PILOTIS (open ground level under the slab) -----
+    // The slab is supported by a row of slim concrete pilotis. Between them
+    // you can see through to the cerrado horizon (Niemeyer's signature
+    // "lifted block" idea). We draw a dark shaded band first (open shadow
+    // under the slab), then 30 evenly spaced columns.
+    const pilotisShade = (r === 3) ? "rgba(0, 0, 20, 0.85)"
+                       : (r === 2) ? "rgba(50, 30, 40, 0.55)"
+                       :             "rgba(40, 50, 70, 0.40)";
+    ctx.fillStyle = pilotisShade;
+    ctx.fillRect(cx - slabHalfW, slabBottom, slabHalfW * 2, GROUND_Y - 20 - slabBottom);
+    // Pilotis columns
+    const colColor = (r === 3) ? "rgba(120, 130, 160, 0.85)"
+                   : (r === 2) ? "rgba(220, 200, 150, 0.95)"
+                   :             "rgba(245, 244, 238, 0.95)";
+    ctx.fillStyle = colColor;
+    const piloCount = 30;
+    const piloW = 3;
+    const piloSpacing = (slabHalfW * 2 - piloW) / (piloCount - 1);
+    for (let i = 0; i < piloCount; i++) {
+      const px = cx - slabHalfW + i * piloSpacing;
+      ctx.fillRect(px, slabBottom, piloW, GROUND_Y - 20 - slabBottom);
+    }
+
+    // ----- SLAB BODY: 580×50, lifted above pilotis -----
     ctx.fillStyle = buildingColor;
     ctx.fillRect(cx - slabHalfW, slabTop, slabHalfW * 2, slabH);
     ctx.strokeStyle = "rgba(0,0,0,0.30)";
@@ -2786,12 +2812,15 @@ canvas#stage {
     drawTowerWindows(cx - 20, towerTop, 16, towerH, r);
     drawTowerWindows(cx + 4,  towerTop, 16, towerH, r);
 
-    // ----- SENATE DOME (LEFT) — full hemisphere opening upward -----
-    const senateCx = cx - 160, senateBaseY = slabTop;
-    const senateR = 70;
+    // ----- SENATE DOME (LEFT) — small convex hemisphere sitting on slab -----
+    // In the photo the Senate dome is noticeably smaller than the Chamber
+    // bowl, and slightly compressed vertically (more squat than spherical).
+    const senateCx = cx - 150, senateBaseY = slabTop;
+    const senateRx = 50;        // dome half-width
+    const senateRy = 36;        // dome height (squat)
     ctx.fillStyle = buildingColor;
     ctx.beginPath();
-    ctx.arc(senateCx, senateBaseY, senateR, Math.PI, 0, false);
+    ctx.ellipse(senateCx, senateBaseY, senateRx, senateRy, 0, Math.PI, 2 * Math.PI, false);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = "rgba(0,0,0,0.30)";
@@ -2800,45 +2829,68 @@ canvas#stage {
     if (r === 1) {
       ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
       ctx.beginPath();
-      ctx.ellipse(senateCx - 22, senateBaseY - 38, 26, 14, -0.4, 0, Math.PI * 2);
+      ctx.ellipse(senateCx - 16, senateBaseY - 22, 18, 9, -0.4, 0, Math.PI * 2);
       ctx.fill();
     } else if (r === 2) {
       ctx.fillStyle = "rgba(255, 240, 180, 0.30)";
       ctx.beginPath();
-      ctx.ellipse(senateCx - 22, senateBaseY - 38, 26, 14, -0.4, 0, Math.PI * 2);
+      ctx.ellipse(senateCx - 16, senateBaseY - 22, 18, 9, -0.4, 0, Math.PI * 2);
       ctx.fill();
     } else {
       // Night: dim, tiny window-style lights along the rim
       ctx.fillStyle = "#ffe066";
-      for (let i = -3; i <= 3; i++) {
-        ctx.fillRect(senateCx - 4 + i * 12, senateBaseY - 10, 2, 2);
+      for (let i = -2; i <= 2; i++) {
+        ctx.fillRect(senateCx - 1 + i * 11, senateBaseY - 6, 2, 2);
       }
     }
 
-    // ----- CHAMBER BOWL (RIGHT) — INVERTED dome, opens UPWARD like a bowl -----
-    const chamberCx = cx + 160, chamberBaseY = slabTop;
-    const chamberR = 70;
+    // ----- CHAMBER BOWL (RIGHT) — wide shallow saucer sitting on the slab -----
+    // In the photo the Chamber is a noticeably WIDER and FLATTER shape than
+    // the Senate dome — it reads almost like a horizontal flying saucer
+    // resting on the slab. We draw the top half of a wide low-aspect ellipse,
+    // so the silhouette stays above slabTop and rests cleanly on the building.
+    const chamberCx = cx + 165, chamberBaseY = slabTop;
+    const chamberRx = 80;       // bowl half-width (wider than Senate)
+    const chamberRy = 22;       // very shallow — saucer profile
     ctx.fillStyle = buildingColor;
     ctx.beginPath();
-    // The bowl opens upward — i.e., its rim is at the top, and the bottom
-    // curves DOWN to a point. We draw the lower hemisphere (filled bowl).
-    ctx.arc(chamberCx, chamberBaseY - 8, chamberR, 0, Math.PI, false);
+    ctx.ellipse(chamberCx, chamberBaseY, chamberRx, chamberRy, 0, Math.PI, 2 * Math.PI, false);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // Bowl rim highlight
-    ctx.fillStyle = r === 3 ? "rgba(120, 120, 160, 0.35)" : "rgba(255, 255, 255, 0.30)";
-    ctx.fillRect(chamberCx - chamberR + 3, chamberBaseY - 9, chamberR * 2 - 6, 2);
-    // Inside-bowl shading (darker bowl interior)
-    ctx.fillStyle = r === 3 ? "rgba(0, 0, 20, 0.5)" : "rgba(0, 0, 0, 0.20)";
+    // Concave shadow inside the saucer rim — gives the bowl its "opens
+    // upward" feel without extending below the slab line.
+    ctx.fillStyle = r === 3 ? "rgba(40, 40, 70, 0.55)" : "rgba(0, 0, 0, 0.22)";
     ctx.beginPath();
-    ctx.ellipse(chamberCx, chamberBaseY + 14, chamberR - 8, 14, 0, 0, Math.PI * 2);
+    ctx.ellipse(chamberCx, chamberBaseY - 4, chamberRx - 8, 6, 0, 0, Math.PI * 2);
     ctx.fill();
+    // Highlights on the upper-left for a sunlit saucer
+    if (r === 1) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.30)";
+      ctx.beginPath();
+      ctx.ellipse(chamberCx - 28, chamberBaseY - 14, 22, 5, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (r === 2) {
+      ctx.fillStyle = "rgba(255, 240, 180, 0.28)";
+      ctx.beginPath();
+      ctx.ellipse(chamberCx - 28, chamberBaseY - 14, 22, 5, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Night: rim of small lit windows around the saucer's lower edge
+      ctx.fillStyle = "#ffe066";
+      for (let i = -4; i <= 4; i++) {
+        ctx.fillRect(chamberCx - 1 + i * 14, chamberBaseY - 4, 2, 2);
+      }
+    }
 
-    // ----- Brazilian flag pole + flag, on top of the slab -----
+    // ----- Brazilian flag pole + flag, between right tower and Chamber bowl -----
+    // Matches the photo: pole rises from the slab top in the gap between
+    // the right tower (cx+22) and the Chamber bowl (cx+165-80 = cx+85).
+    const poleX = cx + 50;
+    const poleH = 60;
     ctx.fillStyle = "#444";
-    ctx.fillRect(cx - 250, slabTop - 56, 1.8, 56);
-    drawTinyFlag(cx - 250, slabTop - 54);
+    ctx.fillRect(poleX, slabTop - poleH, 1.8, poleH);
+    drawTinyFlag(poleX - 1, slabTop - poleH + 2);
 
     // ----- NIGHT extras: green laser beam shooting up from near Congress -----
     if (r === 3) {
@@ -2857,13 +2909,11 @@ canvas#stage {
       ctx.fill();
     }
 
-    // ----- Ipê amarelo trees (Brazil's flowering national tree) — drawn
-    // AFTER buildings so the canopy reads against the slab. Positioned
-    // outside the Cathedral footprint and clear of dome/bowl silhouettes.
-    drawIpeTree(135, GROUND_Y, r);
-    drawIpeTree(420, GROUND_Y, r);
-    drawIpeTree(W - 420, GROUND_Y, r);
-    drawIpeTree(W - 135, GROUND_Y, r);
+    // ----- Ipê amarelo trees — kept at the far edges only, so the
+    // architecture (slab + dome + bowl) stays visible and centered like
+    // in the reference photo of Praça dos Três Poderes.
+    drawIpeTree(110, GROUND_Y, r);
+    drawIpeTree(W - 110, GROUND_Y, r);
 
     // ----- Cerrado grass tufts in the foreground -----
     drawCerradoGrass(r);
