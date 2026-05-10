@@ -1,58 +1,78 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Default Deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
 
-    // Helper Functions
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isAdmin() {
-      return request.auth.token.claims['admin'] == true;
+      return isSignedIn() && request.auth.token.admin == true;
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Users Collection
-    match /databases/{database}/documents/users/{userId} {
-      // Read profile: any authenticated user
-      allow get: isSignedIn();
-      // Write own profile only
-      allow update, create: isOwner(userId);
-      allow delete: isAdmin();
+    // Users collection
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nickname', 'gender', 'seeking', 'photoUrl',
+          'location', 'geohash', 'locationUpdatedAt',
+          'lastActive', 'currentEventId', 'fcmToken',
+          'matchCount'
+        ]);
+      allow delete: if isAdmin();
     }
 
-    // Matches Collection
-    match /databases/{database}/documents/matches/{matchId} {
-      allow get, list: request.auth.uid in resource.data.userIds;
-      allow create, update: request.auth.uid in resource.data.userIds;
-      allow delete: isOwner(resource.data.userIds[0]) || isAdmin();
+    // Matches
+    match /matches/{matchId} {
+      allow get, list: if isSignedIn() && request.auth.uid in resource.data.userIds;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.userIds;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.userIds;
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/matches/$(matchId)).data.userIds;
+        allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/matches/$(matchId)).data.userIds;
+      }
     }
 
-    // Messages subcollection
-    match /databases/{database}/documents/matches/{matchId}/documents/messages/{messageId} {
-      allow read: request.auth.uid in get(/matches/{matchId}).data.userIds;
-      allow create: request.auth.uid in get(/matches/{matchId}).data.userIds;
+    // Likes - the actor writes their own like
+    match /likes/{likeId} {
+      allow get: if isSignedIn() && (request.auth.uid == resource.data.fromId || request.auth.uid == resource.data.toId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.fromId;
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.fromId;
     }
 
-    // Events Collection - read-only for all authenticated users
-    match /databases/{database}/documents/events/{eventId} {
-      allow get, list: isSignedIn();
-      allow create, update: isAdmin();
-      allow delete: isAdmin();
+    // Blocks - blocker only
+    match /blocks/{blockId} {
+      allow get, list: if isSignedIn() && request.auth.uid == resource.data.blockerId;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.blockerId;
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.blockerId;
     }
 
-    // Reports Collection
-    match /databases/{database}/documents/reports/{reportId} {
-      allow create: isSignedIn();
-      allow read, delete: isAdmin();
+    // Events - read-only for authed users
+    match /events/{eventId} {
+      allow get, list: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Reports - any signed-in user can create; admin reads
+    match /reports/{reportId} {
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.reporterId;
+      allow get, list, delete: if isAdmin();
+    }
+
+    // Analytics events
+    match /analytics_events/{eventId}/events/{eventDocId} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin();
     }
   }
 }

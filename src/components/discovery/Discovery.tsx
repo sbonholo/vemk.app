@@ -1,424 +1,286 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, getDoc, onSnapshot, limit, orderBy, serverTimestamp, updateDoc, increment } from 'firebase/firestore';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  addDoc,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp,
+  Timestamp,
+  type DocumentData,
+} from 'firebase/firestore';
+import { MapPin, User as UserIcon } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocationWatcher } from '../../hooks/useLocationWatcher';
+import { haversineMeters, formatDistance } from '../../utils/distance';
+import { trackEvent } from '../../lib/analytics';
+import type { LikeType, UserProfile, Match, BlockDoc, LikeDoc } from '../../types';
 import { SwipeCard } from './SwipeCard';
 import { MatchOverlay } from './MatchOverlay';
-import { UserProfile, LikeType } from '../../types';
-import { ToastType } from '../common/Toast';
-import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, MessageCircle, User as UserIcon, Zap, Settings2 } from 'lucide-react';
-import { trackEvent } from '../../lib/analytics';
-import { watchLocation, getGeoBounds, getDistanceKm, formatProximity, LocationCoords } from '../../lib/location';
-import { geohashForLocation } from 'geofire-common';
 
-export function Discovery({ onGoToMatches, showToast }: { onGoToMatches: (matchId?: string) => void, showToast: (msg: string, type?: ToastType) => void }) {
-  const { user, profile, checkout } = useAuth();
-  const [nearbyUsers, setNearbyUsers] = useState<(UserProfile & { distanceKm?: number })[]>([]);
-  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
-  const [currentEvent, setCurrentEvent] = useState<any>(null);
-  const [incomingLikes, setIncomingLikes] = useState<Record<string, LikeType>>({});
-  const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
+const RADIUS_METERS = 750;
+const STALE_LOCATION_MS = 10 * 60 * 1000;
+const MAX_PROFILES = 50;
+
+interface DiscoveryProps {
+  eventName?: string | null;
+}
+
+export function Discovery({ eventName }: DiscoveryProps) {
+  const { user, profile } = useAuth();
+
+  useLocationWatcher(user?.uid);
+
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
+  const [incomingLikes, setIncomingLikes] = useState<Map<string, LikeType>>(new Map());
+  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
+
   const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
-  const [currentMatchId, setCurrentMatchId] = useState<string | null>(null);
-  
-  const [userLocation, setUserLocation] = useState<LocationCoords | null>(profile?.location || null);
-  const [radiusKm, setRadiusKm] = useState(5);
-  const [showRadiusSelector, setShowRadiusSelector] = useState(false);
+  const [acknowledgedMatchIds, setAcknowledgedMatchIds] = useState<Set<string>>(new Set());
 
-  // Update user location in Firestore periodically or on significant change
+  // One-shot getCurrentPosition for immediate use
   useEffect(() => {
-    if (!user) return;
-
-    let lastUpdateFirestore = 0;
-    const watchId = watchLocation(
-      (coords) => {
-        // Only update local state if it's a "significant" move (> 100m)
-        setUserLocation(prev => {
-          if (!prev) return coords;
-          const dist = getDistanceKm(prev, coords);
-          return dist > 0.1 ? coords : prev;
-        });
-        
-        // Update Firestore every 5 minutes
-        const now = Date.now();
-        if (now - lastUpdateFirestore > 300000) {
-          lastUpdateFirestore = now;
-          const hash = geohashForLocation([coords.lat, coords.lng]);
-          updateDoc(doc(db, 'users', user.uid), {
-            location: coords,
-            geohash: hash,
-            lastActive: serverTimestamp()
-          }).catch(console.error);
-        }
-      },
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       (err) => {
-        console.warn("Location error:", err);
-        // If denied, we still try to show event-based if possible
-        if (!profile?.currentEventId) setLoading(false);
-      }
+        if (err.code === 1) setLocationDenied(true);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
     );
+  }, []);
 
-    return () => {
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-    };
-  }, [user, profile?.currentEventId]);
-
+  // Subscribe to candidate profiles at the same event with matching gender preference
   useEffect(() => {
-    if (!user || !profile) return;
-
-    let unsubUsers: (() => void) | null = null;
-    let unsubLikes: (() => void) | null = null;
-    let unsubBlocks: (() => void) | null = null;
-    let unsubMatches: (() => void) | null = null;
-    let retryTimeout: NodeJS.Timeout;
-
-    const setupListeners = () => {
-      // 0. Fetch Current Event Details
-      const fetchEvent = async () => {
-        const eventDoc = await getDoc(doc(db, 'events', profile.currentEventId!));
-        if (eventDoc.exists()) {
-          setCurrentEvent({ id: eventDoc.id, ...eventDoc.data() });
-        }
-      };
-      fetchEvent();
-
-      // Listen for blocks
-      const blocksQ = query(collection(db, 'blocks'), where('blockerId', '==', user.uid));
-      unsubBlocks = onSnapshot(blocksQ, (snapshot) => {
-        const blocked = new Set(snapshot.docs.map(d => d.data().blockedId));
-        setBlockedUserIds(blocked);
-      }, (error) => {
-        console.error("Blocks listener failed:", error);
-        if (error.message.includes('retries')) retryTimeout = setTimeout(setupListeners, 10000);
-      });
-
-      // Listen for NEW matches real-time
-      const sessionStart = serverTimestamp();
-      const matchesQ = query(
-        collection(db, 'matches'),
-        where('userIds', 'array-contains', user.uid),
-        orderBy('timestamp', 'desc'),
-        limit(1)
-      );
-
-      let isFirstEmitted = true;
-      unsubMatches = onSnapshot(matchesQ, (snapshot) => {
-        if (isFirstEmitted) {
-          isFirstEmitted = false;
-          return;
-        }
-
-        snapshot.docChanges().forEach(async (change) => {
-          if (change.type === 'added') {
-            const matchData = change.doc.data();
-            const matchId = change.doc.id;
-            
-            // Avoid showing overlay if we ALREADY showed it in handleSwipe (currentMatchId match)
-            if (matchId === currentMatchId) return;
-
-            const otherUserId = matchData.userIds.find((id: string) => id !== user.uid);
-            if (!otherUserId) return;
-
-            const otherUserDoc = await getDoc(doc(db, 'users', otherUserId));
-            if (otherUserDoc.exists()) {
-              const otherProfile = { id: otherUserDoc.id, ...otherUserDoc.data() } as UserProfile;
-              const myType = matchData.likeTypes[user.uid];
-              const theirType = matchData.likeTypes[otherUserId];
-
-              setMatchedDetails({ myType, theirType });
-              setMatchedUser(otherProfile);
-              setCurrentMatchId(matchId);
-            }
-          }
-        });
-      });
-
-      // 1. Fetch Incoming Likes to show response UI
-      const likesQuery = query(
-        collection(db, 'likes'),
-        where('toId', '==', user.uid)
-      );
-      
-      unsubLikes = onSnapshot(likesQuery, (snapshot) => {
-        const likesMap: Record<string, LikeType> = {};
-        snapshot.docs.forEach(d => {
-          const data = d.data();
-          likesMap[data.fromId] = data.type as LikeType;
-        });
-        setIncomingLikes(likesMap);
-      }, (error) => {
-        console.error("Likes listener failed:", error);
-        if (error.message.includes('retries')) retryTimeout = setTimeout(setupListeners, 10000);
-      });
-
-      // 2. Fetch Users Real-time based on Location or Event
-      const fetchNearby = async () => {
-        try {
-          if (!userLocation && !profile.currentEventId) {
-            setLoading(false);
+    if (!profile?.currentEventId || !profile.seeking?.length) {
+      setProfiles([]);
+      return;
+    }
+    const constraints = [
+      where('currentEventId', '==', profile.currentEventId),
+      where('gender', 'in', profile.seeking.slice(0, 10)),
+      orderBy('lastActive', 'desc'),
+      limit(MAX_PROFILES),
+    ];
+    const q = query(collection(db, 'users'), ...constraints);
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const next: UserProfile[] = [];
+        snap.forEach((d) => {
+          if (d.id === user?.uid) return;
+          const data = d.data() as DocumentData;
+          // Server-side filter: candidate must be seeking my gender
+          if (Array.isArray(data.seeking) && profile.gender && !data.seeking.includes(profile.gender)) {
             return;
           }
+          next.push({ id: d.id, ...(data as Omit<UserProfile, 'id'>) });
+        });
+        setProfiles(next);
+      },
+      (err) => console.error('Profiles snapshot error:', err)
+    );
+    return () => unsub();
+  }, [profile?.currentEventId, profile?.seeking?.join(','), profile?.gender, user?.uid]);
 
-          // If in event, restricted to event. Otherwise, search by radius.
-          if (profile.currentEventId) {
-            const q = query(
-              collection(db, 'users'),
-              where('currentEventId', '==', profile.currentEventId),
-              where('gender', 'in', profile.seeking),
-              orderBy('lastActive', 'desc'), 
-              limit(50)
-            );
-            
-            unsubUsers = onSnapshot(q, (snapshot) => {
-              const users = snapshot.docs
-                .filter(d => d.id !== user.uid)
-                .map(d => ({ id: d.id, ...d.data() } as UserProfile));
-              
-              setNearbyUsers(users);
-              setLoading(false);
-            }, (error) => {
-              console.error("Discovery stream failed:", error);
-              setLoading(false);
-            });
-          } else if (userLocation) {
-            // Radius search using Geohashes
-            const bounds = getGeoBounds(userLocation, radiusKm);
-            const promises = bounds.map(b => {
-               const q = query(
-                 collection(db, 'users'),
-                 orderBy('geohash'),
-                 where('geohash', '>=', b[0]),
-                 where('geohash', '<=', b[1]),
-                 limit(20)
-               );
-               return getDocs(q);
-            });
+  // Blocks I created
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(collection(db, 'blocks'), where('blockerId', '==', user.uid));
+    const unsub = onSnapshot(q, (snap) => {
+      const ids = new Set<string>();
+      snap.forEach((d) => {
+        const data = d.data() as BlockDoc;
+        ids.add(data.blockedId);
+      });
+      setBlockedIds(ids);
+    });
+    return () => unsub();
+  }, [user?.uid]);
 
-            const snapshots = await Promise.all(promises);
-            const users: (UserProfile & { distanceKm?: number })[] = [];
-            
-            snapshots.forEach(snap => {
-              snap.docs.forEach(d => {
-                const u = d.data() as UserProfile;
-                if (d.id === user.uid) return;
-                if (!profile.seeking.includes(u.gender)) return;
+  // Likes pointed at me (so we know who already liked us → mutual match on like-back)
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(collection(db, 'likes'), where('toId', '==', user.uid));
+    const unsub = onSnapshot(q, (snap) => {
+      const m = new Map<string, LikeType>();
+      snap.forEach((d) => {
+        const data = d.data() as LikeDoc;
+        m.set(data.fromId, data.type);
+      });
+      setIncomingLikes(m);
+    });
+    return () => unsub();
+  }, [user?.uid]);
 
-                const distance = getDistanceKm(userLocation, u.location!);
-                if (distance <= radiusKm) {
-                  users.push({ ...u, id: d.id, distanceKm: distance });
-                }
-              });
-            });
-
-            // Sort by distance
-            users.sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
-            setNearbyUsers(users);
-            setLoading(false);
+  // New match notifications
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(collection(db, 'matches'), where('userIds', 'array-contains', user.uid));
+    const unsub = onSnapshot(q, (snap) => {
+      snap.docChanges().forEach(async (change) => {
+        if (change.type !== 'added') return;
+        const m = { id: change.doc.id, ...(change.doc.data() as Omit<Match, 'id'>) };
+        if (m.status !== 'mutual') return;
+        if (acknowledgedMatchIds.has(m.id)) return;
+        const otherId = m.userIds.find((u) => u !== user.uid);
+        if (!otherId) return;
+        try {
+          const otherSnap = await getDoc(doc(db, 'users', otherId));
+          if (otherSnap.exists()) {
+            setMatchedUser({ id: otherSnap.id, ...(otherSnap.data() as Omit<UserProfile, 'id'>) });
+            setAcknowledgedMatchIds((prev) => new Set(prev).add(m.id));
           }
         } catch (err) {
-          console.error("fetchNearby failed:", err);
-          setLoading(false);
+          console.error('Match user fetch failed:', err);
         }
-      };
+      });
+    });
+    return () => unsub();
+  }, [user?.uid, acknowledgedMatchIds]);
 
-      fetchNearby();
-    };
-
-    setupListeners();
-
-    return () => {
-      if (unsubLikes) unsubLikes();
-      if (unsubUsers) unsubUsers();
-      if (unsubBlocks) unsubBlocks();
-      if (unsubMatches) unsubMatches();
-      if (retryTimeout) clearTimeout(retryTimeout);
-    };
-  }, [user, profile, userLocation, radiusKm]);
-
-  const [matchedDetails, setMatchedDetails] = useState<{ myType: LikeType, theirType: LikeType } | null>(null);
-
-  const handleCheckOut = async () => {
-    try {
-      await checkout();
-    } catch (error) {
-      console.error("Checkout failed:", error);
-    }
+  const isLocationRecent = (u: UserProfile): boolean => {
+    const ts = u.locationUpdatedAt;
+    if (!ts) return true; // no timestamp → don't exclude
+    const updatedMs = ts instanceof Timestamp ? ts.toMillis() : 0;
+    return Date.now() - updatedMs < STALE_LOCATION_MS;
   };
 
-  const handleSwipe = async (userId: string, targetId: string, dir: 'left' | 'right', type: LikeType = 'normal') => {
-    const eventId = profile?.currentEventId || 'default';
+  const isWithinRadius = (u: UserProfile): boolean => {
+    if (!myLocation || !u.location?.lat || !u.location?.lng) return true; // fallback when location missing
+    return (
+      haversineMeters(myLocation.lat, myLocation.lng, u.location.lat, u.location.lng) <=
+      RADIUS_METERS
+    );
+  };
+
+  const visibleProfiles = useMemo(() => {
+    return profiles
+      .filter((p) => !blockedIds.has(p.id))
+      .filter((p) => !seenIds.has(p.id))
+      .filter(isLocationRecent)
+      .filter(isWithinRadius);
+  }, [profiles, blockedIds, seenIds, myLocation]);
+
+  const currentCandidate = visibleProfiles[0];
+
+  const distanceFor = (u: UserProfile): string | null => {
+    if (!myLocation || !u.location?.lat || !u.location?.lng) return null;
+    return formatDistance(
+      haversineMeters(myLocation.lat, myLocation.lng, u.location.lat, u.location.lng)
+    );
+  };
+
+  const handleLike = async (likeType: LikeType) => {
+    if (!user?.uid || !currentCandidate) return;
+    const targetId = currentCandidate.id;
+    setSeenIds((prev) => new Set(prev).add(targetId));
 
     try {
-      if (dir === 'right') {
-        trackEvent('like', eventId, { fromId: userId, toId: targetId, type });
-        
-        const likeId = `${userId}_${targetId}`;
-        const likePromise = setDoc(doc(db, 'likes', likeId), {
-          fromId: userId,
-          toId: targetId,
-          type,
-          timestamp: serverTimestamp(),
-          eventId
-        });
+      const likeId = `${user.uid}_${targetId}`;
+      await setDoc(doc(db, 'likes', likeId), {
+        fromId: user.uid,
+        toId: targetId,
+        type: likeType,
+        createdAt: serverTimestamp(),
+      });
+      if (profile?.currentEventId) {
+        trackEvent('like', profile.currentEventId, { targetId, likeType });
+      }
 
-        // Increment interaction count for robustness tracking
-        const userRef = doc(db, 'users', userId);
-        const incPromise = updateDoc(userRef, {
-          interactionsCount: increment(1)
+      // If they already liked us → create mutual match
+      if (incomingLikes.has(targetId)) {
+        const userIds = [user.uid, targetId].sort() as [string, string];
+        const matchId = userIds.join('_');
+        await setDoc(doc(db, 'matches', matchId), {
+          userIds,
+          status: 'mutual',
+          createdAt: serverTimestamp(),
         });
-        
-        await Promise.all([likePromise, incPromise]);
-
-        // Broad Match detection logic (Any combination of the 3 buttons)
-        if (incomingLikes[targetId]) {
-          const theirType = incomingLikes[targetId];
-          const myType = type;
-          
-          trackEvent('match', eventId, { userIds: [userId, targetId], types: { [userId]: myType, [targetId]: theirType } });
-          
-          const matchId = [userId, targetId].sort().join('_');
-          await setDoc(doc(db, 'matches', matchId), {
-            userIds: [userId, targetId],
-            likeTypes: {
-              [userId]: myType,
-              [targetId]: theirType
-            },
-            timestamp: serverTimestamp(),
-            eventId
-          });
-          
-          // Find matched user profile
-          const matched = nearbyUsers.find(u => u.id === targetId);
-          if (matched) {
-            setMatchedDetails({ myType, theirType });
-            setMatchedUser(matched);
-            setCurrentMatchId(matchId);
-          }
+        if (profile?.currentEventId) {
+          trackEvent('match', profile.currentEventId, { targetId });
         }
       }
-    } catch (error: any) {
-      console.error("Discovery action failed:", error);
-      showToast("Ops! Houve um erro na conexão.", 'error');
+    } catch (err) {
+      console.error('Like failed:', err);
     }
-    setCurrentIndex(prev => prev + 1);
   };
 
-  if (loading) return <div className="flex items-center justify-center bg-black text-white" style={{ height: '100dvh' }}>Carregando o rolê...</div>;
+  const handleDislike = () => {
+    if (!currentCandidate) return;
+    setSeenIds((prev) => new Set(prev).add(currentCandidate.id));
+  };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden relative" style={{ height: '100dvh' }}>
-      <AnimatePresence>
-        {matchedUser && (
-          <MatchOverlay 
-            userProfile={profile}
-            otherProfile={matchedUser}
-            myType={matchedDetails?.myType}
-            theirType={matchedDetails?.theirType}
-            onClose={() => {
-              setMatchedUser(null);
-              setMatchedDetails(null);
-              setCurrentMatchId(null);
-            }}
-            onChat={() => {
-              const mid = currentMatchId;
-              setMatchedUser(null);
-              setMatchedDetails(null);
-              setCurrentMatchId(null);
-              onGoToMatches(mid || undefined);
-            }}
-          />
-        )}
-      </AnimatePresence>
-      {/* Header - Immersive UI Style */}
-      <header className="w-full flex justify-between items-center z-10 p-6">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center glow-pink font-bold text-xl italic shadow-lg">V</div>
-          <span className="text-xl font-bold tracking-tighter uppercase italic text-white">VemK.</span>
-        </div>
-        
-        <div 
-          onClick={handleCheckOut}
-          className="glass px-4 py-2 rounded-full flex items-center gap-2 shadow-sm cursor-pointer hover:bg-white/10 transition-colors"
-        >
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+    <div className="relative h-full w-full flex flex-col bg-[var(--color-brand-bg)]" style={{ height: '100dvh' }}>
+      <header className="absolute top-0 inset-x-0 z-20 flex justify-center pt-6">
+        <div className="glass px-4 py-2 rounded-full flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]" />
           <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-300">
-            📍 {currentEvent?.name || 'Local'}
+            {eventName || 'Local'} · {visibleProfiles.length} por perto
           </span>
-        </div>
-        
-        <div className="flex gap-3">
-          <button 
-            onClick={() => setShowRadiusSelector(!showRadiusSelector)}
-            className={`glass w-10 h-10 rounded-full flex items-center justify-center transition-colors ${showRadiusSelector ? 'bg-pink-600/30' : 'hover:bg-white/10'}`}
-          >
-            <Settings2 size={18} className={showRadiusSelector ? 'text-pink-400' : 'text-neutral-400'} />
-          </button>
-          <button className="glass w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
-            <Zap size={18} className="text-pink-500" />
-          </button>
         </div>
       </header>
 
-      {/* Radius Selector UI */}
-      <AnimatePresence>
-        {showRadiusSelector && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-24 left-1/2 -translate-x-1/2 z-20 w-[90%] max-w-sm glass p-4 rounded-3xl border border-white/10 shadow-2xl"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-[10px] font-black uppercase tracking-widest text-pink-400">Raio de Busca</span>
-              <span className="text-xl font-black italic">{radiusKm}km</span>
-            </div>
-            <input 
-              type="range" 
-              min="1" 
-              max="50" 
-              value={radiusKm} 
-              onChange={(e) => setRadiusKm(Number(e.target.value))}
-              className="w-full accent-pink-600 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+      <main className="flex-1 flex items-center justify-center p-6 pt-24 pb-12">
+        {currentCandidate ? (
+          <div className="relative w-full max-w-sm aspect-[3/4]">
+            <SwipeCard
+              key={currentCandidate.id}
+              user={currentCandidate}
+              distanceLabel={distanceFor(currentCandidate)}
+              onLike={handleLike}
+              onDislike={handleDislike}
             />
-            <div className="flex justify-between mt-2 text-[8px] font-bold text-white/40 uppercase tracking-tighter">
-              <span>Bares / Restaurantes (1-2km)</span>
-              <span>Universidades / Praias (5-10km)</span>
-              <span>Toda a cidade (20-50km)</span>
+          </div>
+        ) : locationDenied ? (
+          <div className="text-center space-y-4 px-6 max-w-sm">
+            <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mx-auto border border-neutral-800">
+              <MapPin size={32} className="text-pink-500" />
             </div>
-          </motion.div>
+            <h3 className="font-bold text-xl text-white">Localização necessária</h3>
+            <p className="text-neutral-500 text-sm">
+              Permita o acesso à sua localização para encontrar pessoas a 750m de você.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-6 py-2 bg-pink-600 rounded-full text-sm font-bold uppercase tracking-widest text-white"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : (
+          <div className="text-center space-y-4 max-w-sm">
+            <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mx-auto border border-neutral-800">
+              <UserIcon size={32} className="text-neutral-500" />
+            </div>
+            <h3 className="font-bold text-xl text-white">Acabaram as pessoas!</h3>
+            <p className="text-neutral-500 text-sm">
+              Ninguém a 750m agora. Tente se mover ou aguarde.
+            </p>
+          </div>
         )}
-      </AnimatePresence>
+      </main>
 
-      {/* Card Stack */}
-      <div className="flex-1 relative flex items-center justify-center px-4 pb-12">
-        <AnimatePresence>
-          {currentIndex < nearbyUsers.filter(u => !blockedUserIds.has(u.id)).length ? (
-            nearbyUsers
-              .filter(u => !blockedUserIds.has(u.id))
-              .slice(currentIndex, currentIndex + 2).reverse().map((otherProfile, idx) => (
-              <SwipeCard 
-                key={otherProfile.id} 
-                profile={otherProfile} 
-                receivedLikeType={incomingLikes[otherProfile.id]}
-                onSwipe={(dir, type) => handleSwipe(user!.uid, otherProfile.id, dir, type)} 
-                onGoToMatches={onGoToMatches}
-              />
-            ))
-          ) : (
-            <div className="text-center space-y-4">
-              <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mx-auto border border-neutral-800">
-                <UserIcon size={32} className="text-neutral-500" />
-              </div>
-              <div>
-                <h3 className="font-bold text-xl">Acabaram as pessoas!</h3>
-                <p className="text-neutral-500 text-sm">Tente mudar sua localização ou critérios.</p>
-              </div>
-            </div>
-          )}
-        </AnimatePresence>
-      </div>
+      {matchedUser && (
+        <MatchOverlay
+          matchedUser={matchedUser}
+          myPhotoUrl={profile?.photoUrl}
+          onClose={() => setMatchedUser(null)}
+        />
+      )}
     </div>
   );
 }
+
+export default Discovery;

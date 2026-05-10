@@ -5,7 +5,7 @@ export type EventType = 'check_in' | 'like' | 'match' | 'message';
 
 export const trackEvent = async (type: EventType, eventId: string, metadata: any = {}) => {
   try {
-    const eventsRef = collection(db, 'events');
+    const eventsRef = collection(db, 'analytics_events', eventId, 'events');
     await addDoc(eventsRef, {
       type,
       eventId,
