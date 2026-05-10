@@ -1,0 +1,50 @@
+name: Sync index.html to batalha-brasil
+
+# Mirrors index.html from this repo's `export-batalha-brasil` branch to
+# `sbonholo/batalha-brasil` on `main`, which is what GitHub Pages serves
+# at https://sbonholo.github.io/batalha-brasil/. Triggers automatically on
+# any push to export-batalha-brasil that touches index.html, and can also
+# be run manually from the Actions tab.
+#
+# Requires the `BATALHA_DEPLOY_TOKEN` secret: a fine-grained PAT scoped
+# to sbonholo/batalha-brasil with Contents: Read and Write.
+
+on:
+  push:
+    branches: [export-batalha-brasil]
+    paths: [index.html]
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source (vemk.app @ export-batalha-brasil)
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout target (batalha-brasil @ main)
+        uses: actions/checkout@v4
+        with:
+          repository: sbonholo/batalha-brasil
+          ref: main
+          token: ${{ secrets.BATALHA_DEPLOY_TOKEN }}
+          path: target
+
+      - name: Copy index.html
+        run: cp source/index.html target/index.html
+
+      - name: Commit and push if changed
+        working-directory: target
+        run: |
+          git config user.name  "vemk-sync-bot"
+          git config user.email "vemk-sync-bot@users.noreply.github.com"
+          if git diff --quiet -- index.html; then
+            echo "No changes to sync."
+            exit 0
+          fi
+          git add index.html
+          SHORT_SHA="${GITHUB_SHA::7}"
+          git commit -m "Sync index.html from vemk.app@${SHORT_SHA}"
+          git push origin main
