@@ -1,148 +1,198 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, ArrowRight, User as UserIcon, Sparkles, Zap, Flame, AlertCircle } from 'lucide-react';
+import { Camera, Upload, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { Toast } from '../common/Toast';
-import { ToastType } from '../common/Toast';
+import { Toast, type ToastType } from '../common/Toast';
+import type { Gender } from '../../types';
 
-type Gender = 'man' | 'woman' | 'non-binary' | 'other';
+const GENDERS: { value: Gender; label: string }[] = [
+  { value: 'man', label: 'Homem' },
+  { value: 'woman', label: 'Mulher' },
+  { value: 'non-binary', label: 'Não-binário' },
+  { value: 'other', label: 'Outro' },
+];
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+interface ProfileSetupProps {
+  onComplete: () => void;
+}
 
-export default function ProfileSetup({ onComplete }: { onComplete: () => void }) {
-  const { user } = useAuth();
+export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
+  const { user, updateProfile } = useAuth();
   const [nickname, setNickname] = useState('');
   const [gender, setGender] = useState<Gender>('man');
   const [seeking, setSeeking] = useState<Gender[]>([]);
-  const [photoURL, setPhotoURL] = useState<string>('');
+  const [photoUrl, setPhotoUrl] = useState<string>('');
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{message: '', type: 'success' as ToastType} | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const notifPerm = 'denied' as const;
-CORS não configurado.`;
-          }
-          
-          setErrorMessage(msg);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError('A foto é muito grande! Tente uma de até 10MB.');
+      return;
+    }
+
+    setUploading(true);
+    setProgress(0);
+    setError(null);
+
+    try {
+      const storageRef = ref(storage, `profiles/${user.uid}/profile_${Date.now()}`);
+      const task = uploadBytesResumable(storageRef, file);
+
+      task.on(
+        'state_changed',
+        (snapshot) => {
+          const p = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setProgress(Math.round(p));
+        },
+        (err) => {
+          console.error('Upload failed:', err);
+          setError('Erro no upload: ' + err.message);
           setUploading(false);
-        }, 
+        },
         async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          const url = await getDownloadURL(task.snapshot.ref);
           setPhotoUrl(url);
           setUploading(false);
         }
       );
-    } catch (e) {
-      console.error('Upload error:', e);
-      setErrorMessage('Erro ao fazer upload. Tente novamente.');
-    } finally {
+    } catch (e: any) {
+      console.error(e);
+      setError('Erro ao fazer upload. Tente novamente.');
       setUploading(false);
     }
   };
 
+  const toggleSeeking = (g: Gender) => {
+    setSeeking((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
+  };
+
   const handleSave = async () => {
-    if (!user) return;
+    if (!nickname.trim() || seeking.length === 0 || !photoUrl) {
+      setError('Preencha nickname, foto e pelo menos uma preferência.');
+      return;
+    }
     setSaving(true);
     setError(null);
-
     try {
-      // 1. Update Firestore user document
-      const userRef = doc(db, 'users', user.uid);
-      await setDoc(userRef, {
-        nickname,
+      await updateProfile({
+        nickname: nickname.trim(),
         gender,
         seeking,
-        photoUrl: photoURL || null,
+        photoUrl,
       });
-
-      // 2. Update Firebase Auth displayName
-      await user.updateProfile({ displayName: nickname });
-
       setToast({ message: 'Perfil configurado com sucesso!', type: 'success' });
       onComplete();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save error:', err);
       setError('Erro ao salvar perfil. Tente novamente.');
     } finally {
       setSaving(false);
     }
   };
-          {photoUrl ? (
-                <img 
-                  src={photoUrl} 
-                  alt="Preview" 
-                  className="w-full h-full object-cover" 
-                  onError={(e) => {
-                    console.error("Image loading error", e);
-                    setPhotoUrl('');
-                  }}
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                  <Camera size={48} className="text-white/40" />
-                </div>
-              )}
+
+  return (
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar pb-12" style={{ height: '100dvh' }}>
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
+
+      <div className="px-6 pt-12 pb-6 text-center">
+        <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">VemK</h1>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-pink-500 mt-1">Configure seu perfil</p>
+      </div>
+
+      <div className="p-6 max-w-md mx-auto w-full space-y-8">
+        <div className="flex flex-col items-center gap-4">
+          <div
+            onClick={() => !uploading && !saving && fileRef.current?.click()}
+            className="w-40 h-40 rounded-[48px] glass flex items-center justify-center overflow-hidden cursor-pointer hover:border-pink-500/50 transition-all relative glow-pink shadow-2xl border-2 border-white/5"
+          >
+            {photoUrl ? (
+              <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <Camera size={40} className="text-white/20" />
+            )}
+            {uploading && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <span className="text-xs font-black text-white">{progress}%</span>
+              </div>
+            )}
           </div>
-        </label>
-        
-        {/* Seeking section */}
+          <input type="file" ref={fileRef} onChange={handleFileUpload} className="hidden" accept="image/*" />
+        </div>
+
         <div className="space-y-2">
-          <label className="text-sm font-medium text-white/70 block">Interessado em:</label>
-          <div className="flex flex-wrap gap-2">
-            {['man', 'woman', 'non-binary', 'other'].map(g => (
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 px-1">Seu Nick</label>
+          <input
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="Ex: Noitada_SP"
+            maxLength={30}
+            className="w-full glass rounded-3xl px-6 py-4 text-white font-medium placeholder-white/30 outline-none"
+          />
+        </div>
+
+        <div className="space-y-3">
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 px-1">Eu sou...</label>
+          <div className="grid grid-cols-2 gap-2">
+            {GENDERS.map((g) => (
               <button
-                key={g}
-                onClick={() => {
-                  if (seeking.includes(g)) setSeeking(seeking.filter((v) => v !== g));
-                  else setSeeking([...seeking, g]);
-                }}
-                className={seeking.includes(g) ? 'bg-pink-600 border-pink-500 text-white glow-pink' : 'glass border-white/5 text-white/70 hover:bg-white/10'}
+                key={g.value}
+                onClick={() => setGender(g.value)}
+                className={`px-3 py-4 rounded-2xl border text-[9px] font-black uppercase tracking-widest transition-all ${
+                  gender === g.value ? 'bg-white text-black border-white' : 'glass border-white/5 text-white/40'
+                }`}
               >
-                {g.charAt(0).toUpperCase() + g.slice(1)}
+                {g.label}
               </button>
             ))}
           </div>
         </div>
-lack uppercase tracking-[0.2em] text-white/40 px-1">Seu Nick no Evento</label>
-            <input 
-              value={nickname}
-              onChange={e => setNickname(e.target.value)}
-              placeholder="Ex: Noitada_SP"
-              className="w-full glass rounded-3xl px-6 py-4 text-white font-medium placeholder-white/30 outline-none focus:outline-none"
-              maxLength={30}
-            />
+
+        <div className="space-y-3">
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 px-1">Busco por...</label>
+          <div className="grid grid-cols-2 gap-2">
+            {GENDERS.map((g) => (
+              <button
+                key={g.value}
+                onClick={() => toggleSeeking(g.value)}
+                className={`px-3 py-4 rounded-2xl border text-[9px] font-black uppercase tracking-widest transition-all ${
+                  seeking.includes(g.value)
+                    ? 'bg-pink-600 border-pink-500 text-white glow-pink'
+                    : 'glass border-white/5 text-white/40'
+                }`}
+              >
+                {g.label}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="flex gap-4 w-full">
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="flex flex-col items-center gap-2 flex-1 glass rounded-3xl px-6 py-6 hover:bg-white/10 transition-colors"
-          >
-            {uploading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/40" />
-                Carregando...
-              </>
-            ) : (
-              <>
-                <Upload size={20} className="text-white/60" />
-                Foto de Perfil
-              </>
-            )}
-          </button>
-          <button
-            disabled={saving}
-            onClick={handleSave}
-            className="flex flex-col items-center gap-2 flex-1 bg-[var(--color-brand-pink)] rounded-3xl px-6 py-4 text-white font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
-          >
-            {saving ? 'Salvando...' : 'Salvar Perfil'}
-          </button>
-        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 text-red-400 text-xs">
+            <AlertCircle size={14} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <button
+          onClick={handleSave}
+          disabled={uploading || saving}
+          className="w-full bg-pink-600 glow-pink rounded-3xl px-6 py-5 text-white text-xs font-black uppercase tracking-[0.3em] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+        >
+          {saving ? 'Salvando...' : (
+            <>
+              <Upload size={16} /> Salvar e entrar
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

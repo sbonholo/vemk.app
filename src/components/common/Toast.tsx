@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -10,7 +10,7 @@ interface ToastProps {
   onDismiss?: () => void;
 }
 
-export default function Toast({ message, type = 'success', onDismiss }: ToastProps) {
+export function Toast({ message, type = 'success', onDismiss }: ToastProps) {
   const icons = {
     success: <CheckCircle2 className="w-4 h-4 text-green-400" />,
     error: <AlertCircle className="w-4 h-4 text-red-400" />,
@@ -40,3 +40,5 @@ export default function Toast({ message, type = 'success', onDismiss }: ToastPro
     </AnimatePresence>
   );
 }
+
+export default Toast;

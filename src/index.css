@@ -42,10 +42,21 @@ body {
   box-sizing: border-box;
 }
 
-.no-scrollbar:-webkit-scrollbar {
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
-  overflow: -moz-scrollbars;
+  -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glow-pink {
+  box-shadow: 0 0 24px rgba(219, 39, 119, 0.35);
 }

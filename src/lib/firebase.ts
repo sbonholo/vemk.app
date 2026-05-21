@@ -1,26 +1,30 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { getMessaging, isSupported } from 'firebase/messaging';
+import { getStorage } from 'firebase/storage';
+import { getMessaging, isSupported, type Messaging } from 'firebase/messaging';
 import { getAnalytics } from 'firebase/analytics';
 
-// Firebase configuration is loaded from firebase-applet-config.json at runtime
-// The VITE_FIREBASE_CONFIG env var is set by the server from firebase-applet-config.json
-const firebaseConfig = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG || '{}');
+const rawConfig =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_FIREBASE_CONFIG) ||
+  (typeof window !== 'undefined' && (window as any).__FIREBASE_CONFIG__) ||
+  '{}';
+
+const firebaseConfig = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
+const databaseId: string | undefined = firebaseConfig.firestoreDatabaseId;
 
 export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const db = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
-let messagingInstance: ReturnType<typeof getMessaging> | null = null;
-
-export const getMessagingInstance = async () => {
-  if (!messagingInstance) {
-    const supported = await isSupported();
-    if (supported) {
-      messagingInstance = getMessaging(app);
-    }
+let messagingInstance: Messaging | null = null;
+export const getMessagingInstance = async (): Promise<Messaging | null> => {
+  if (messagingInstance) return messagingInstance;
+  if (typeof window === 'undefined') return null;
+  if (await isSupported()) {
+    messagingInstance = getMessaging(app);
   }
   return messagingInstance;
 };

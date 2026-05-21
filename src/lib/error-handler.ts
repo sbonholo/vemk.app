@@ -9,7 +9,7 @@ export interface FirestoreErrorInfo {
     email: string;
     emailVerified: boolean;
     isAnonymous: boolean;
-  };
+  } | null;
   timestamp: any;
 }
 
