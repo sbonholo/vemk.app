@@ -560,7 +560,6 @@ canvas#stage {
   <button class="menu-btn facil"   data-difficulty="facil">FÁCIL</button>
   <button class="menu-btn medio"   data-difficulty="medio">MÉDIO</button>
   <button class="menu-btn dificil" data-difficulty="dificil">DIFÍCIL</button>
-  <button class="menu-btn online" id="btn-online">⚔️ JOGAR ONLINE</button>
 </div>
 
 <!-- Online multiplayer modal -->
@@ -5732,17 +5731,38 @@ canvas#stage {
 
   // ---------- TITLE SCREEN ----------
   function drawTitle() {
-    // Big title with vertical Brazil-flag gradient (green → yellow → blue)
+    // Portraits FIRST so the title text below draws on top of any sprite
+    // pixels that creep into the title's horizontal extent. Also pushed
+    // slightly down (cy = H * 0.66) so the heads sit well below the title
+    // baseline even on tall viewports.
+    drawTitlePortrait(W * 0.27, H * 0.66, "ze", -1);
+    drawTitlePortrait(W * 0.73, H * 0.66, "capitao", 1);
+
+    // VS between portraits
     ctx.save();
-    ctx.translate(W / 2, 110);
-    const titleGrad = ctx.createLinearGradient(0, -42, 0, 42);
+    ctx.translate(W / 2, H * 0.62);
+    ctx.fillStyle = "#c8102e";
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 6;
+    ctx.font = '900 84px "Impact",system-ui,sans-serif';
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.strokeText("VS", 0, 0);
+    ctx.fillText("VS", 0, 0);
+    ctx.restore();
+
+    // Big title with vertical Brazil-flag gradient (green → yellow → blue).
+    // Drawn AFTER portraits so it always sits on top of them. Font sized
+    // to keep "BATALHA BRASIL" comfortably inside the inner portrait edges.
+    ctx.save();
+    ctx.translate(W / 2, 100);
+    const titleGrad = ctx.createLinearGradient(0, -38, 0, 38);
     titleGrad.addColorStop(0,   "#009c3b");   // flag green
     titleGrad.addColorStop(0.5, "#ffdf00");   // flag yellow
     titleGrad.addColorStop(1,   "#002776");   // flag blue
     ctx.fillStyle = titleGrad;
     ctx.strokeStyle = "#000";
-    ctx.lineWidth = 9;
-    ctx.font = '900 92px "Impact","Arial Black",system-ui,sans-serif';
+    ctx.lineWidth = 8;
+    ctx.font = '900 80px "Impact","Arial Black",system-ui,sans-serif';
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.strokeText("BATALHA BRASIL", 0, 0);
     ctx.fillText("BATALHA BRASIL", 0, 0);
@@ -5754,31 +5774,15 @@ canvas#stage {
     ctx.fillStyle = "#009c3b";
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 4;
-    ctx.font = '900 30px "Impact","Arial Black",system-ui,sans-serif';
-    ctx.strokeText("JOGUE GRÁTIS!", 0, 56);
-    ctx.fillText("JOGUE GRÁTIS!", 0, 56);
+    ctx.font = '900 28px "Impact","Arial Black",system-ui,sans-serif';
+    ctx.strokeText("JOGUE GRÁTIS!", 0, 52);
+    ctx.fillText("JOGUE GRÁTIS!", 0, 52);
     ctx.restore();
 
     // Subtitle
     ctx.fillStyle = "#fff";
     ctx.font = "700 17px system-ui";
-    ctx.fillText("A paródia política mais épica do Brasil", 0, 88);
-    ctx.restore();
-
-    // Two fighter portraits as large versions of in-game art
-    drawTitlePortrait(W * 0.27, H * 0.62, "ze", -1);
-    drawTitlePortrait(W * 0.73, H * 0.62, "capitao", 1);
-
-    // VS
-    ctx.save();
-    ctx.translate(W / 2, H * 0.6);
-    ctx.fillStyle = "#c8102e";
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 6;
-    ctx.font = '900 84px "Impact",system-ui,sans-serif';
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.strokeText("VS", 0, 0);
-    ctx.fillText("VS", 0, 0);
+    ctx.fillText("A paródia política mais épica do Brasil", 0, 84);
     ctx.restore();
 
     // The HTML menu renders the difficulty selector on top of this canvas,
@@ -6125,12 +6129,8 @@ canvas#stage {
       btn.addEventListener("click", () => { audio.menuPick(); startSelect(diff); });
     });
 
-    // Online button → open the online modal
-    el("btn-online").addEventListener("click", () => {
-      audio.menuPick();
-      showOnlineModal();
-    });
-    // Online modal handlers
+    // Online modal handlers (modal infrastructure kept for future re-enable;
+    // the entry-point button has been removed from the menu for now)
     el("online-host").addEventListener("click", () => { audio.menuPick(); onlineHost(); });
     el("online-join").addEventListener("click", () => { audio.menuPick(); showOnlineStep("join"); setOnlineStatus(""); });
     el("online-connect").addEventListener("click", () => {
