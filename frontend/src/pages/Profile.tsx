@@ -10,6 +10,8 @@ export function Profile() {
   const [bio, setBio] = useState(user?.bio || '');
   const [nickname, setNickname] = useState(user?.nickname || '');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
 
   async function save() {
     setSaving(true);
@@ -24,9 +26,17 @@ export function Profile() {
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const { photoUrl } = await api.uploadPhoto(f);
-    if (user) setUser({ ...user, photoUrl });
+    setPreview(URL.createObjectURL(f));
+    setUploading(true);
+    try {
+      const { photoUrl } = await api.uploadPhoto(f);
+      if (user) setUser({ ...user, photoUrl });
+    } finally {
+      setUploading(false);
+    }
   }
+
+  const displayPhoto = preview || user?.photoUrl || null;
 
   return (
     <div className="screen">
@@ -35,14 +45,34 @@ export function Profile() {
       <div className="card" style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 18 }}>
         <div
           className="avatar"
-          style={{ width: 80, height: 80, backgroundImage: user?.photoUrl ? `url("${user.photoUrl}")` : undefined }}
+          style={{
+            width: 80,
+            height: 80,
+            backgroundImage: displayPhoto ? `url("${displayPhoto}")` : undefined,
+            opacity: uploading ? 0.6 : 1,
+          }}
         />
         <div style={{ flex: 1 }}>
           <strong style={{ fontSize: 18 }}>{user?.nickname || '—'}</strong>
           <div className="muted" style={{ fontSize: 13 }}>{user?.phone}</div>
-          <label className="chip" style={{ marginTop: 8, display: 'inline-flex', cursor: 'pointer' }}>
-            Trocar foto
-            <input type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
+          <label
+            className="chip"
+            style={{
+              marginTop: 8,
+              display: 'inline-flex',
+              cursor: uploading ? 'default' : 'pointer',
+              opacity: uploading ? 0.5 : 1,
+              pointerEvents: uploading ? 'none' : 'auto',
+            }}
+          >
+            {uploading ? 'Enviando...' : 'Trocar foto'}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={onPhoto}
+              disabled={uploading}
+              style={{ display: 'none' }}
+            />
           </label>
         </div>
       </div>

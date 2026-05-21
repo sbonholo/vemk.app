@@ -11,6 +11,19 @@ const genders: { value: Gender; label: string; icon: string }[] = [
   { value: 'other', label: 'Outro', icon: '✨' },
 ];
 
+const TOTAL_STEPS = 5;
+
+function ageFromBirthdate(iso: string): number | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age;
+}
+
 export function Onboarding() {
   const nav = useNavigate();
   const { user, setUser } = useAuth();
@@ -21,7 +34,10 @@ export function Onboarding() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(user?.photoUrl || null);
   const [bio, setBio] = useState(user?.bio || '');
+  const [birthdate, setBirthdate] = useState<string>(user?.birthdate || '');
   const [saving, setSaving] = useState(false);
+
+  const age = ageFromBirthdate(birthdate);
 
   function toggleSeeking(g: Gender) {
     setSeeking((s) => (s.includes(g) ? s.filter((x) => x !== g) : [...s, g]));
@@ -38,7 +54,14 @@ export function Onboarding() {
     if (!nickname || !gender) return;
     setSaving(true);
     try {
-      const { user } = await api.updateMe({ nickname, gender, seeking, bio });
+      const patch: Record<string, unknown> = {
+        nickname,
+        gender,
+        seeking,
+        bio,
+        birthdate: birthdate ? birthdate : undefined,
+      };
+      const { user } = await api.updateMe(patch);
       if (photo) {
         const { photoUrl } = await api.uploadPhoto(photo);
         user.photoUrl = photoUrl;
@@ -50,10 +73,13 @@ export function Onboarding() {
     }
   }
 
+  // birthdate max: today
+  const today = new Date().toISOString().slice(0, 10);
+
   return (
     <div className="screen">
       <h2 style={{ marginTop: 12, marginBottom: 4 }}>Vamos te conhecer</h2>
-      <p className="muted" style={{ marginBottom: 22 }}>Passo {step + 1} de 4</p>
+      <p className="muted" style={{ marginBottom: 22 }}>Passo {step + 1} de {TOTAL_STEPS}</p>
 
       {step === 0 && (
         <>
@@ -152,6 +178,28 @@ export function Onboarding() {
             rows={3}
             onChange={(e) => setBio(e.target.value)}
           />
+          <button className="btn" style={{ marginTop: 22 }} onClick={() => setStep(4)}>
+            Próximo
+          </button>
+        </>
+      )}
+
+      {step === 4 && (
+        <>
+          <label className="muted" style={{ fontSize: 13, marginBottom: 8, display: 'block' }}>
+            Quando você nasceu?
+          </label>
+          <input
+            type="date"
+            value={birthdate}
+            max={today}
+            onChange={(e) => setBirthdate(e.target.value)}
+          />
+          {age != null && (
+            <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+              {age} anos · opcional, você pode pular
+            </p>
+          )}
           <button className="btn" style={{ marginTop: 22 }} disabled={saving} onClick={finish}>
             {saving ? 'Salvando...' : 'Bora! 🔥'}
           </button>

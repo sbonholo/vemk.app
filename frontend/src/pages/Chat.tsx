@@ -1,9 +1,41 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Fragment } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../state/AuthContext';
 import type { ChatMessage, MatchSummary } from '../types';
 import { getSocket } from '../lib/socket';
+
+function fmtTime(ts: number): string {
+  return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtDateLabel(ts: number): string {
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (sameDay) return 'Hoje';
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (
+    d.getFullYear() === yesterday.getFullYear() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getDate() === yesterday.getDate()
+  ) return 'Ontem';
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function isSameDay(a: number, b: number): boolean {
+  const da = new Date(a);
+  const db = new Date(b);
+  return (
+    da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate()
+  );
+}
 
 export function Chat() {
   const { matchId } = useParams<{ matchId: string }>();
@@ -82,11 +114,40 @@ export function Chat() {
             É match! Manda a primeira 💋
           </p>
         )}
-        {messages.map((m) => (
-          <div key={m.id} className={`chat-message ${m.fromUserId === user?.id ? 'mine' : 'theirs'}`}>
-            {m.text}
-          </div>
-        ))}
+        {messages.map((m, i) => {
+          const mine = m.fromUserId === user?.id;
+          const showDateSep = i === 0 || !isSameDay(messages[i - 1].createdAt, m.createdAt);
+          return (
+            <Fragment key={m.id}>
+              {showDateSep && (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    color: 'var(--muted)',
+                    fontSize: 11,
+                    margin: '14px 0 6px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  {fmtDateLabel(m.createdAt)}
+                </div>
+              )}
+              <div className={`chat-message ${mine ? 'mine' : 'theirs'}`}>{m.text}</div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: 'var(--muted)',
+                  textAlign: mine ? 'right' : 'left',
+                  marginTop: 2,
+                  marginBottom: 6,
+                }}
+              >
+                {fmtTime(m.createdAt)}
+              </div>
+            </Fragment>
+          );
+        })}
       </div>
 
       <form onSubmit={send} className="chat-input">

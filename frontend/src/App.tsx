@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './state/AuthContext';
 import { ToastProvider, useToast } from './components/Toast';
+import { UnreadProvider } from './state/UnreadContext';
 import { Login } from './pages/Login';
 import { VerifyOtp } from './pages/VerifyOtp';
 import { Onboarding } from './pages/Onboarding';
@@ -73,8 +74,9 @@ export function App() {
 
   return (
     <ToastProvider>
-      <GlobalSocketListeners />
-      <div className="app">
+      <UnreadProvider>
+        <GlobalSocketListeners />
+        <div className="app">
         <Routes>
           <Route path="/" element={user && !loading ? <Navigate to="/events" replace /> : <Login />} />
           <Route path="/verify" element={<VerifyOtp />} />
@@ -85,8 +87,9 @@ export function App() {
           <Route path="/chat/:matchId" element={<Protected><Chat /></Protected>} />
           <Route path="/me" element={<Protected><Profile /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+          </Routes>
+        </div>
+      </UnreadProvider>
     </ToastProvider>
   );
 }

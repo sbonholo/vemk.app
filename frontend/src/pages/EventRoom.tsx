@@ -25,12 +25,19 @@ export function EventRoom() {
   const [selected, setSelected] = useState<PersonAtEvent | null>(null);
   const [checkedIn, setCheckedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [matchModal, setMatchModal] = useState<{ matchId: string; other: User } | null>(null);
 
   const refreshPeople = useCallback(async () => {
-    const { people } = await api.listPeople(eventId);
-    setPeople(people);
-    setSelected((prev) => (prev ? people.find((p: PersonAtEvent) => p.id === prev.id) || null : null));
+    setRefreshing(true);
+    try {
+      const { people } = await api.listPeople(eventId);
+      setPeople(people);
+      setSelected((prev) => (prev ? people.find((p: PersonAtEvent) => p.id === prev.id) || null : null));
+    } finally {
+      setRefreshing(false);
+    }
   }, [eventId]);
 
   useEffect(() => {
@@ -45,7 +52,7 @@ export function EventRoom() {
         setCheckedIn(true);
         await refreshPeople();
       } catch {
-        nav('/events', { replace: true });
+        if (!cancelled) setLoadError('Evento não encontrado ou indisponível.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -87,7 +94,6 @@ export function EventRoom() {
       const res = await api.sendReaction(targetId, eventId, type);
       toast({ kind: type, text: `Você mandou um ${LABEL[type]} ${ICON[type]}` });
       if (res.match) {
-        // match modal will arrive via socket too, but trigger immediately for sender
         const other = people.find((p) => p.id === targetId);
         if (other) setMatchModal({ matchId: res.match.id, other });
       }
@@ -95,6 +101,20 @@ export function EventRoom() {
     } catch {
       toast({ kind: 'info', text: 'Não rolou enviar agora' });
     }
+  }
+
+  if (loadError) {
+    return (
+      <div className="screen">
+        <div className="header">
+          <button className="chip" onClick={() => nav('/events')}>← Voltar</button>
+        </div>
+        <div className="empty">
+          <div className="big">😕</div>
+          <p>{loadError}</p>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -105,9 +125,20 @@ export function EventRoom() {
     <div className="screen">
       <div className="header">
         <button onClick={checkOut} className="chip">← Sair</button>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontWeight: 700 }}>{event?.name}</div>
-          <div className="muted" style={{ fontSize: 12 }}>{event?.venue}</div>
+        <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div>
+            <div style={{ fontWeight: 700 }}>{event?.name}</div>
+            <div className="muted" style={{ fontSize: 12 }}>{event?.venue}</div>
+          </div>
+          <button
+            className="chip"
+            style={{ fontSize: 12 }}
+            onClick={refreshPeople}
+            disabled={refreshing}
+            aria-label="Atualizar lista"
+          >
+            {refreshing ? '...' : '↻'}
+          </button>
         </div>
       </div>
 

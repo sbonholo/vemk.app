@@ -1,0 +1,13 @@
+{
+  "name": "Beija",
+  "short_name": "Beija",
+  "description": "Conexões reais em eventos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0014",
+  "theme_color": "#e11d74",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

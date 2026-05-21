@@ -2,6 +2,17 @@ import type { PersonAtEvent, ReactionType } from '../types';
 
 const ICON: Record<ReactionType, string> = { kiss: '💋', heart: '❤️', fire: '🔥' };
 
+function calcAge(birthdate: string | null): number | null {
+  if (!birthdate) return null;
+  const d = new Date(birthdate);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age < 130 ? age : null;
+}
+
 export function PersonCard({
   person,
   selected,
@@ -11,6 +22,8 @@ export function PersonCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const age = calcAge(person.birthdate);
+
   return (
     <button
       type="button"
@@ -33,7 +46,9 @@ export function PersonCard({
         )}
       </div>
       <div className="overlay">
-        <div className="nick">{person.nickname || 'Anônimo'}</div>
+        <div className="nick">
+          {person.nickname || 'Anônimo'}{age ? `, ${age}` : ''}
+        </div>
       </div>
     </button>
   );

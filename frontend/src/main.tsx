@@ -5,6 +5,12 @@ import { App } from './App';
 import { AuthProvider } from './state/AuthContext';
 import './index.css';
 
+const redirect = sessionStorage.getItem('redirect');
+if (redirect) {
+  sessionStorage.removeItem('redirect');
+  window.history.replaceState(null, '', redirect);
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
