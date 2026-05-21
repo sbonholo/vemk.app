@@ -19,6 +19,16 @@ try {
 
 const app = express();
 
+// Redirect Cloud Run URL to vemk.app
+app.use((req, res, next) => {
+  const cloudRunHost = 'vemk-match-maker-de-eventos-592686170890.us-east1.run.app';
+  const host = req.headers.host || '';
+  if (host === cloudRunHost) {
+    return res.redirect(301, `https://vemk.app${req.originalUrl}`);
+  }
+  next();
+});
+
 let viteServer: any = null;
 
 async function startServer() {
