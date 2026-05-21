@@ -5,7 +5,10 @@ let socket: Socket | null = null;
 
 export function getSocket(): Socket {
   if (socket && socket.connected) return socket;
-  const url = import.meta.env.VITE_SOCKET_URL || undefined;
+  const url =
+    import.meta.env.VITE_SOCKET_URL ||
+    import.meta.env.VITE_API_URL ||
+    undefined;
   socket = io(url, {
     autoConnect: true,
     transports: ['websocket', 'polling'],
