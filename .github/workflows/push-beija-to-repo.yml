@@ -1,0 +1,26 @@
+name: Push Beija code to sbonholo/beija
+
+on:
+  workflow_dispatch:
+
+jobs:
+  push-beija:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout vemk.app
+        uses: actions/checkout@v4
+
+      - name: Push backend and frontend to sbonholo/beija
+        env:
+          BEIJA_PAT: ${{ secrets.BEIJA_PAT }}
+        run: |
+          git clone https://x-access-token:${BEIJA_PAT}@github.com/sbonholo/beija.git /tmp/beija
+          cp -r backend /tmp/beija/
+          cp -r frontend /tmp/beija/
+          cp README-DEPLOY.md /tmp/beija/ 2>/dev/null || true
+          cd /tmp/beija
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -A
+          git commit -m "feat: import Beija app from sbonholo/vemk.app"
+          git push origin main
